@@ -91,16 +91,15 @@ export const PRESTIGE = [
   ["Really scary", "Make an Odium or Malediction Ward", "Make the other one"],
 ].map(([name, condition, prestige]) => ({ id: `prestige:${slug(name)}`, kind: "prestige", name, condition, prestige }));
 
-// `steps` is the number of ticks a task has. Autism in Progress and Monkeys were not stated
-// in the sheet, so their counts are a guess: change them here if wrong (ticks are stored per step).
+// `steps` is the number of ticks a task has (one point each). Ticks are stored per step.
 export const INCREMENTAL = [
   ["Noob Weapons", "Leafbladed Weapon, Trident of Sea, Brine Sabre, G Maul, G Sword", 5],
   ["Demonslayer", "Abyssal Whip, Abyssal Dagger, Synapse, Burning Claw, Zalcano Shard", 5],
   ["Fury Warrior", "Sulphur Blades, Glacial Temotli, Dual Macuahuitl, Earthbound Tecpatl", 4],
   ["Autism in Progress", "Get each piece of the Soulreaper Axe", 4],
   ["Lord of the Rings pt 2", "Callisto, Vetion, Venenatis Ring", 3],
-  ["Slops", "Any item that can be mounted on a Head display and Araxyte head", 2],
-  ["Monkeys", "Each monkey backpack", 4],
+  ["Slops", "Any item that can be mounted on a Head display and Araxyte head", 7],
+  ["Monkeys", "Each monkey backpack", 6],
 ].map(([name, condition, steps]) => ({ id: `inc:${slug(name)}`, kind: "incremental", name, condition, steps }));
 
 export const PVP = [

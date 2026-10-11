@@ -1,5 +1,5 @@
-import { validKeys } from "../../../shared/tasks.mjs";
-import { json, teamById, checkPassword, teamState } from "../../_lib.js";
+import { validKeys } from "../../shared/tasks.mjs";
+import { json, teamById, checkPassword, teamState } from "../_lib.js";
 
 const KEYS = validKeys();
 

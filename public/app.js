@@ -146,7 +146,10 @@ function draw() {
       scales: { x: { type: "linear", ticks: { callback: (v) => new Date(v).toLocaleDateString(undefined, { day: "numeric", month: "short" }), maxTicksLimit: 6 } }, y: { beginAtZero: true } },
     },
   });
-  const max = { Standard: 246, Chungus: 120, Prestige: 120, Incremental: 27, PvP: 15 };
+  const sum = (id, f) => board.sections.find((x) => x.id === id).tasks.reduce((a, t) => a + f(t), 0);
+  const max = { Standard: sum("standard", () => board.points.standard), Chungus: sum("chungus", () => board.points.chungus),
+    Prestige: sum("prestige", () => board.points.prestigeBase + board.points.prestigeBonus), Incremental: sum("incremental", (t) => t.steps * board.points.step),
+    PvP: sum("pvp", () => board.points.pvp[0]) };
   const s = state.score;
   const mine = { Standard: s.standard, Chungus: s.chungus, Prestige: s.prestige, Incremental: s.incremental, PvP: s.pvp };
   charts.bars = new Chart($("#bars"), {

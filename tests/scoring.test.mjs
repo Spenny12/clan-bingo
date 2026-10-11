@@ -47,6 +47,6 @@ test("breakdown total equals the sum of events", () => {
   const pvp = [{ task: "pvp:lms-tourney", place: 2, at: 5 }];
   const sum = scoreEvents(ticks, pvp).reduce((s, e) => s + e.points, 0);
   assert.equal(sum, breakdown(ticks, pvp).total);
-  // 41*6 + 12*10 + 15*8 + (5+5+4+4+3+2+4) + 2
-  assert.equal(sum, 246 + 120 + 120 + 27 + 2);
+  // 41*6 + 12*10 + 15*8 + (5+5+4+4+3+7+6) + 2
+  assert.equal(sum, 246 + 120 + 120 + 34 + 2);
 });
