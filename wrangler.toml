@@ -1,0 +1,9 @@
+name = "clan-bingo"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "public"
+
+# Created via the Cloudflare connector; schema is in migrations/0001_init.sql.
+[[d1_databases]]
+binding = "DB"
+database_name = "clan-bingo"
+database_id = "295f7812-05a6-41aa-ae5c-2c099e6bb3b9"

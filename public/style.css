@@ -1,0 +1,23 @@
+:root{--bg:#14161b;--card:#1d2027;--line:#2c313b;--text:#e8eaed;--mute:#9aa1ad;--acc:#f2b84b;--ok:#4cc38a;--bad:#e5645a}
+@media (prefers-color-scheme:light){:root{--bg:#f5f3ee;--card:#fff;--line:#e2ded3;--text:#1d1f24;--mute:#666d7a;--acc:#b9770e;--ok:#1f9d63;--bad:#c4392f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0}h2{font-size:1.15rem;margin:1.4em 0 .3em}.mute{color:var(--mute);font-size:.9rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.tab{flex:1 1 150px;padding:10px 12px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;cursor:pointer;font:inherit}
+.tab[aria-selected=true]{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+form.login{display:flex;gap:8px;flex-wrap:wrap}input,select,button{font:inherit;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+button.go{background:var(--acc);color:#111;border-color:var(--acc);cursor:pointer;font-weight:600}
+.err{color:var(--bad);min-height:1.4em}
+.score{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}.big{font-size:2.6rem;font-weight:700;color:var(--acc);line-height:1}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:.85rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.task.done{border-color:var(--ok)}.task.done .nm{text-decoration:line-through;text-decoration-color:var(--mute)}
+.task input[type=checkbox]{width:20px;height:20px;margin-top:2px;flex:none}.nm{font-weight:600}.sub{color:var(--mute);font-size:.88rem}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.steps label{display:flex;gap:4px;align-items:center;font-size:.9rem}
+.zero{color:var(--bad);font-size:.82rem}
+canvas{max-height:300px}.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+table{border-collapse:collapse;width:100%}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.hidden{display:none}

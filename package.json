@@ -1,0 +1,10 @@
+{
+  "name": "clan-bingo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1 DB --binding PASS_CRYSTAL=a PASS_KIZZ=b PASS_POPPERS=c PASS_JOBCENTRE=d PASS_ORGANISER=org",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": { "wrangler": "^4" }
+}
