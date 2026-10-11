@@ -1,7 +1,7 @@
 import { onRequestGet as tasksGet } from "./api/tasks.js";
 import { onRequestGet as teamGet, onRequestPost as teamPost } from "./api/team.js";
 import { onRequestGet as adminGet, onRequestPost as adminPost } from "./api/admin.js";
-import { json } from "./_lib.js";
+import { json, passwordFor } from "./_lib.js";
 import { TEAMS } from "../shared/tasks.mjs";
 
 // Only /api/* reaches this Worker (see run_worker_first in wrangler.toml); everything else is a static file.
@@ -15,7 +15,7 @@ export default {
         // Booleans only, never values: shows whether the secrets and database are wired up.
         const names = [...TEAMS.map((t) => t.env), "PASS_ORGANISER"];
         const db = await env.DB?.prepare("SELECT COUNT(*) AS n FROM ticks").first().then(() => true, () => false);
-        return json({ secrets: Object.fromEntries(names.map((n) => [n, Boolean(env[n])])), db: Boolean(db) });
+        return json({ passwords: Object.fromEntries(await Promise.all(names.map(async (n) => [n, Boolean(await passwordFor(env, n))]))), db: Boolean(db) });
       }
       if (pathname === "/api/tasks" && method === "GET") return tasksGet();
       if (team && method === "GET") return await teamGet({ request, env, params: { id: team[1] } });

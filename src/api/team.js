@@ -6,7 +6,7 @@ const KEYS = validKeys();
 export async function onRequestGet({ request, env, params }) {
   const team = teamById(params.id);
   if (!team) return json({ error: "No such team." }, 404);
-  const denied = checkPassword(request, env, team.env);
+  const denied = await checkPassword(request, env, team.env);
   if (denied) return denied;
   return json({ team: { id: team.id, name: team.name, players: team.players }, ...(await teamState(env, team)) });
 }
@@ -14,7 +14,7 @@ export async function onRequestGet({ request, env, params }) {
 export async function onRequestPost({ request, env, params }) {
   const team = teamById(params.id);
   if (!team) return json({ error: "No such team." }, 404);
-  const denied = checkPassword(request, env, team.env);
+  const denied = await checkPassword(request, env, team.env);
   if (denied) return denied;
 
   const body = await request.json().catch(() => null);

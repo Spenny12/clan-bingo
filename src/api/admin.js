@@ -7,14 +7,14 @@ async function overview(env) {
 }
 
 export async function onRequestGet({ request, env }) {
-  const denied = checkPassword(request, env, "PASS_ORGANISER");
+  const denied = await checkPassword(request, env, "PASS_ORGANISER");
   if (denied) return denied;
   return json(await overview(env));
 }
 
 // Award (or clear) a PvP placement: { task: "pvp:lms-tourney", place: 1|2|3, team: "kizz" | null }
 export async function onRequestPost({ request, env }) {
-  const denied = checkPassword(request, env, "PASS_ORGANISER");
+  const denied = await checkPassword(request, env, "PASS_ORGANISER");
   if (denied) return denied;
   const b = await request.json().catch(() => null);
   const okTask = b && PVP.some((p) => p.id === b.task);
