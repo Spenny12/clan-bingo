@@ -1,3 +1,4 @@
+import { cycleTheme, themeLabel } from "/theme.js";
 const $ = (s, el = document) => el.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -15,6 +16,7 @@ const store = {
 };
 
 let board, current, state, charts = {};
+const ui = { tab: "overview", hideDone: false, q: "" };
 const api = async (path, opts = {}, pw) => {
   const res = await fetch(path, { ...opts, headers: { "content-type": "application/json", "x-password": pw || "" } });
   const data = await res.json().catch(() => ({}));
@@ -68,6 +70,22 @@ async function load(pw, quiet, errEl) {
 const has = (key) => state.ticks.some((t) => t.key === key);
 const $pts = (n) => `${n} pt${n === 1 ? "" : "s"}`;
 
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/** [done, total] for a section, for the tab labels. */
+function sectionCount(sec) {
+  const n = (f) => sec.tasks.reduce((a, t) => a + f(t), 0);
+  if (sec.id === "incremental") return [n((t) => Array.from({ length: t.steps }, (_, i) => has(`${t.id}#${i + 1}`)).filter(Boolean).length), n((t) => t.steps)];
+  if (sec.id === "pvp") return [state.pvp.length, sec.tasks.length * 3];
+  return [n((t) => (has(t.id) ? 1 : 0)), sec.tasks.length];
+}
+const isDone = (t) => {
+  if (t.kind === "pvp") return state.pvp.some((p) => p.task === t.id);
+  if (t.kind === "incremental") return Array.from({ length: t.steps }, (_, i) => has(`${t.id}#${i + 1}`)).every(Boolean);
+  if (t.kind === "prestige") return has(t.id) && has(`${t.id}#p`);
+  return has(t.id);
+};
+
 function render(pw) {
   const view = $("#view");
   for (const c of Object.values(charts)) c.destroy();
@@ -77,22 +95,51 @@ function render(pw) {
   who.value = store.get(`bingo:who:${current.id}`) || "";
   who.addEventListener("change", () => store.set(`bingo:who:${current.id}`, who.value));
 
-  const header = el("div", { class: "card" },
-    el("div", { class: "row" }, el("h2", { style: "margin:0" }, current.name), who,
-      el("button", { onclick: () => { store.set(`bingo:pw:${current.id}`, null); showLogin(); } }, "Log out")),
-    el("div", { class: "score" }, el("span", { class: "big" }, String(s.total)), el("span", { class: "mute" }, "points")),
-    el("div", { class: "chips" },
-      ...[["Standard", s.standard], ["Chungus", s.chungus], ["Prestige", s.prestige], ["Incremental", s.incremental], ["PvP", s.pvp]]
-        .map(([n, v]) => el("span", { class: "chip" }, `${n} ${v}`))));
+  const tabs = [["overview", "Overview"], ...board.sections.map((sec) => [sec.id, sec.title])];
+  const seg = el("div", { class: "seg", role: "tablist" }, ...tabs.map(([id, label]) => {
+    const sec = board.sections.find((x) => x.id === id);
+    const [d, t] = sec ? sectionCount(sec) : [null, null];
+    return el("button", { role: "tab", "aria-selected": String(ui.tab === id), onclick: () => { ui.tab = id; window.scrollTo(0, 0); render(pw); } },
+      label, sec ? el("small", {}, `${d}/${t}`) : "");
+  }));
 
-  const progress = el("div", { class: "card" }, el("h2", { style: "margin-top:0" }, "Points over time"), el("canvas", { id: "line" }),
-    el("h2", {}, "Where the points came from"), el("canvas", { id: "bars" }));
+  const bar = el("div", { class: "bar" },
+    el("span", { class: "name" }, current.name), el("span", { class: "pts" }, String(s.total)), el("span", { class: "mute" }, "pts"),
+    el("span", { class: "spacer" }), who,
+    el("button", { onclick: () => { store.set(`bingo:pw:${current.id}`, null); showLogin(); } }, "Log out"));
 
-  const sections = board.sections.map((sec) => el("section", {}, el("h2", {}, sec.title), el("p", { class: "mute" }, sec.blurb),
-    el("div", { class: "grid" }, ...sec.tasks.map((t) => taskCard(t, pw)))));
+  const body = el("div", {});
+  view.replaceChildren(el("div", { class: "sticky" }, bar, seg), body);
+  if (ui.tab === "overview") renderOverview(body);
+  else renderSection(body, board.sections.find((x) => x.id === ui.tab), pw);
+}
 
-  view.replaceChildren(header, progress, ...sections);
+function renderOverview(body) {
+  const s = state.score;
+  const recent = [...state.events].reverse().slice(0, 8);
+  body.append(
+    el("div", { class: "card" }, el("div", { class: "chips" },
+      ...[["Standard", s.standard], ["Chungus", s.chungus], ["Prestige", s.prestige], ["Incremental", s.incremental], ["PvP", s.pvp]].map(([n, v]) => el("span", { class: "chip" }, `${n} ${v}`)))),
+    el("div", { class: "charts" },
+      el("div", { class: "card" }, el("h2", {}, "Points over time"), el("div", { class: "chart" }, el("canvas", { id: "line" }))),
+      el("div", { class: "card" }, el("h2", {}, "Where the points came from"), el("div", { class: "chart" }, el("canvas", { id: "bars" })))),
+    el("div", { class: "card" }, el("h2", {}, "Latest ticks"),
+      recent.length ? el("ul", { class: "recent" }, ...recent.map((e) => el("li", {}, el("span", {}, e.label), el("span", { class: "mute" }, `+${e.points} · ${new Date(e.at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`))))
+        : el("div", { class: "empty" }, "Nothing ticked yet. Pick a tab above and get going.")));
   draw();
+}
+
+function renderSection(body, sec, pw) {
+  const list = el("div", {});
+  const paint = () => {
+    const q = ui.q.trim().toLowerCase();
+    const tasks = sec.tasks.filter((t) => (!ui.hideDone || !isDone(t)) && (!q || `${t.name} ${t.condition} ${t.prestige || ""}`.toLowerCase().includes(q)));
+    list.replaceChildren(tasks.length ? el("div", { class: "grid" }, ...tasks.map((t) => taskCard(t, pw))) : el("div", { class: "empty" }, "Nothing to show here."));
+  };
+  const search = el("input", { type: "search", placeholder: "Search tasks…", value: ui.q, "aria-label": "Search tasks", oninput: (e) => { ui.q = e.target.value; paint(); } });
+  const hide = el("input", { type: "checkbox", checked: ui.hideDone, onchange: (e) => { ui.hideDone = e.target.checked; paint(); } });
+  body.append(el("p", { class: "mute", style: "margin:8px 0 0" }, sec.blurb), el("div", { class: "tools" }, search, el("label", { class: "row" }, hide, "Hide done")), list);
+  paint();
 }
 
 function toggle(key, on, pw) {
@@ -132,18 +179,19 @@ function taskCard(t, pw) {
 }
 
 function draw() {
-  const ev = state.events;
+  const accent = cssVar("--acc"), mute = cssVar("--mute"), line = cssVar("--line");
+  Chart.defaults.color = mute;
+  Chart.defaults.borderColor = line;
   let run = 0;
-  const pts = ev.map((e) => ({ x: e.at, y: (run += e.points), label: e.label }));
-  const accent = getComputedStyle(document.documentElement).getPropertyValue("--acc").trim() || "#f2b84b";
+  const pts = state.events.map((e) => ({ x: e.at, y: (run += e.points), label: e.label }));
   if (pts.length) { pts.unshift({ x: pts[0].x - 1, y: 0, label: "" }); pts.push({ x: Date.now(), y: run, label: "" }); }
   charts.line = new Chart($("#line"), {
     type: "line",
     data: { datasets: [{ data: pts, borderColor: accent, backgroundColor: accent + "33", fill: true, stepped: true, pointRadius: 2 }] },
     options: {
-      parsing: false, animation: false,
+      parsing: false, animation: false, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { title: (i) => new Date(i[0].raw.x).toLocaleString(), label: (i) => `${i.raw.y} pts ${i.raw.label ? "· " + i.raw.label : ""}` } } },
-      scales: { x: { type: "linear", ticks: { callback: (v) => new Date(v).toLocaleDateString(undefined, { day: "numeric", month: "short" }), maxTicksLimit: 6 } }, y: { beginAtZero: true } },
+      scales: { x: { type: "linear", ticks: { callback: (v) => new Date(v).toLocaleDateString(undefined, { day: "numeric", month: "short" }), maxTicksLimit: 5 } }, y: { beginAtZero: true } },
     },
   });
   const sum = (id, f) => board.sections.find((x) => x.id === id).tasks.reduce((a, t) => a + f(t), 0);
@@ -154,9 +202,14 @@ function draw() {
   const mine = { Standard: s.standard, Chungus: s.chungus, Prestige: s.prestige, Incremental: s.incremental, PvP: s.pvp };
   charts.bars = new Chart($("#bars"), {
     type: "bar",
-    data: { labels: Object.keys(mine), datasets: [{ label: "Earned", data: Object.values(mine), backgroundColor: accent }, { label: "Still available", data: Object.keys(mine).map((k) => Math.max(0, max[k] - mine[k])), backgroundColor: "#8884" }] },
-    options: { animation: false, scales: { x: { stacked: true }, y: { stacked: true } } },
+    data: { labels: Object.keys(mine), datasets: [{ label: "Earned", data: Object.values(mine), backgroundColor: accent }, { label: "Still available", data: Object.keys(mine).map((k) => Math.max(0, max[k] - mine[k])), backgroundColor: mute + "55" }] },
+    options: { animation: false, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } },
   });
 }
+
+const themeBtn = $("#theme");
+themeBtn.textContent = themeLabel();
+themeBtn.onclick = () => { cycleTheme(); themeBtn.textContent = themeLabel(); };
+window.addEventListener("themechange", () => { if (state && ui.tab === "overview") { for (const c of Object.values(charts)) c.destroy(); charts = {}; draw(); } });
 
 init();

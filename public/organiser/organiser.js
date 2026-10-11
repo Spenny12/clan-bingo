@@ -1,3 +1,4 @@
+import { cycleTheme, themeLabel } from "/theme.js";
 const $ = (s) => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -55,3 +56,5 @@ async function render() {
   if (!pw) return login();
   try { data = await call({}); render(); } catch (e) { login(e.status === 401 ? "" : e.message); }
 })();
+
+const tb = document.getElementById("theme"); tb.textContent = themeLabel(); tb.onclick = () => { cycleTheme(); tb.textContent = themeLabel(); };
