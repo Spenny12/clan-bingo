@@ -1,5 +1,5 @@
 import { validKeys } from "../../shared/tasks.mjs";
-import { json, teamById, checkPassword, teamState } from "../_lib.js";
+import { json, teamById, checkPassword, teamState, isOpen } from "../_lib.js";
 
 const KEYS = validKeys();
 
@@ -21,6 +21,7 @@ export async function onRequestPost({ request, env, params }) {
   if (!body || typeof body.key !== "string" || !KEYS.has(body.key) || typeof body.on !== "boolean") {
     return json({ error: "Bad request." }, 400);
   }
+  if (!(await isOpen(env))) return json({ error: "Ticking is closed by the organiser." }, 423);
   if (body.on) {
     const by = team.players.includes(body.by) ? body.by : null;
     // INSERT OR IGNORE keeps the original time if a box is ticked twice.

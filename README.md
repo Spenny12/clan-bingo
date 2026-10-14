@@ -2,8 +2,9 @@
 
 A points tracker for a clan bingo: four teams, each with a shared password, tick off tasks and watch their points. Runs on Cloudflare Pages + a Worker (static assets + API) + D1.
 
-- **Teams** pick their tab, enter the team password, and tick tasks (optionally saying who got it). Progress is stored with timestamps, so the team page shows points over time and points by section. Teams only see their own scores.
-- **Organiser** page (`/organiser/`) shows all team scores and awards PvP placements (3/2/1 points).
+- **Teams** pick their tab, enter the team password, and tick tasks (optionally saying who got it). Progress is stored with timestamps, so the team page shows points over time and points by section. A **Players** tab breaks the team's points down by player (whoever was picked in "Ticking as…"): running totals, points per day, a per-section table and each player's ticks. Teams only see their own *tasks*.
+- **Scoreboard** (public, no password): every team's total, points by section, a race chart, and a player leaderboard with day streaks and badges (`shared/badges.mjs`). It never shows which tasks a team has done.
+- **Organiser** page (`/organiser/`) shows all team scores, awards PvP placements (3/2/1 points), and has a switch to open or close ticking for everyone.
 - **Scoring** (`shared/scoring.mjs`): standard 6, CHUNGUS 10, prestige 5 base + 3 prestige, incremental 1 per step. A prestige tick scores **0 until the base is ticked**.
 - The board lives in `shared/tasks.mjs`.
 
@@ -11,7 +12,7 @@ Passwords are plain shared secrets sent in a header: fine for a clan bingo, not 
 
 ## Deploy
 
-Cloudflare Workers & Pages, connected to this GitHub repo (build command empty, deploy command `npx wrangler deploy`). `wrangler.toml` already holds the D1 binding. Then add five **secrets** under Settings, Variables and Secrets: `PASS_CRYSTAL`, `PASS_KIZZ`, `PASS_POPPERS`, `PASS_JOBCENTRE`, `PASS_ORGANISER`. Every push to `main` redeploys.
+Cloudflare Workers & Pages, connected to this GitHub repo (build command empty, deploy command `npx wrangler deploy`). `wrangler.toml` already holds the D1 binding. Then add five **secrets** under Settings, Variables and Secrets: `PASS_CRYSTAL`, `PASS_KIZZ`, `PASS_POPPERS`, `PASS_JOBCENTRE`, `PASS_ORGANISER`. Every push to `main` redeploys. When a new file appears in `migrations/`, apply it to the live database once: `npx wrangler d1 migrations apply clan-bingo --remote`.
 
 ## Develop
 

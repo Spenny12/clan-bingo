@@ -1,9 +1,12 @@
 import { TEAMS, PVP } from "../../shared/tasks.mjs";
-import { json, checkPassword, teamState } from "../_lib.js";
+import { json, checkPassword, teamState, isOpen, setOpen } from "../_lib.js";
 
 async function overview(env) {
-  const teams = await Promise.all(TEAMS.map(async (t) => ({ id: t.id, name: t.name, players: t.players, ...(await teamState(env, t)) })));
-  return { teams };
+  const [teams, open] = await Promise.all([
+    Promise.all(TEAMS.map(async (t) => ({ id: t.id, name: t.name, players: t.players, ...(await teamState(env, t)) }))),
+    isOpen(env),
+  ]);
+  return { teams, open };
 }
 
 export async function onRequestGet({ request, env }) {
@@ -12,11 +15,17 @@ export async function onRequestGet({ request, env }) {
   return json(await overview(env));
 }
 
+// Open or close ticking: { open: true | false }
 // Award (or clear) a PvP placement: { task: "pvp:lms-tourney", place: 1|2|3, team: "kizz" | null }
 export async function onRequestPost({ request, env }) {
   const denied = await checkPassword(request, env, "PASS_ORGANISER");
   if (denied) return denied;
   const b = await request.json().catch(() => null);
+  if (b && typeof b.open === "boolean") {
+    try { await setOpen(env, b.open); }
+    catch { return json({ error: "The settings table is missing: apply migrations/0003_settings.sql to D1." }, 500); }
+    return json(await overview(env));
+  }
   const okTask = b && PVP.some((p) => p.id === b.task);
   const okTeam = b && (b.team === null || TEAMS.some((t) => t.id === b.team));
   if (!okTask || !okTeam || ![1, 2, 3].includes(b.place)) return json({ error: "Bad request." }, 400);

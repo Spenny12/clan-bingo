@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { breakdown, scoreEvents } from "../shared/scoring.mjs";
+import { breakdown, scoreEvents, playerBreakdown } from "../shared/scoring.mjs";
 import { validKeys, SECTIONS, STANDARD, CHUNGUS, PRESTIGE, INCREMENTAL, PVP } from "../shared/tasks.mjs";
 
 const t = (key, at = 1) => ({ key, at });
@@ -49,4 +49,23 @@ test("breakdown total equals the sum of events", () => {
   assert.equal(sum, breakdown(ticks, pvp).total);
   // 41*6 + 12*10 + 15*8 + (5+5+4+4+3+7+6) + 2
   assert.equal(sum, 246 + 120 + 120 + 34 + 2);
+});
+
+test("player breakdown credits whoever ticked each box", () => {
+  const ticks = [
+    { key: "standard:masks", at: 1, by: "Adam" },
+    { key: "prestige:blood-torva", at: 2, by: "Adam" },
+    { key: "prestige:blood-torva#p", at: 3, by: "Ryan" },
+    { key: "inc:slops#1", at: 4, by: null },
+    { key: "chungus:nightmare", at: 5, by: "Ghost" }, // not on the roster
+  ];
+  const rows = playerBreakdown(scoreEvents(ticks, [{ task: "pvp:lms-tourney", place: 1, at: 6 }]), ["Adam", "Spenny", "Ryan"]);
+  assert.deepEqual(rows.map((r) => [r.player, r.total, r.ticks]), [["Adam", 11, 2], ["Spenny", 0, 0], ["Ryan", 3, 1], [null, 14, 3]]);
+  assert.equal(rows[0].sections.prestige, 5);
+  assert.equal(rows[3].last, 6);
+});
+
+test("player breakdown has no unnamed row when everything is named", () => {
+  const rows = playerBreakdown(scoreEvents([{ key: "standard:masks", at: 1, by: "Adam" }]), ["Adam"]);
+  assert.deepEqual(rows.map((r) => r.player), ["Adam"]);
 });

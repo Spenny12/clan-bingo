@@ -33,6 +33,12 @@ async function award(task, place, team) {
   catch (e) { alert(e.message); }
 }
 
+async function setOpen(open) {
+  try { data = await call({ method: "POST", body: JSON.stringify({ open }) }); }
+  catch (e) { alert(e.message); }
+  render();
+}
+
 async function render() {
   pvpTasks ||= (await (await fetch("/api/tasks")).json()).sections.find((s) => s.id === "pvp").tasks;
   const rank = [...data.teams].sort((a, b) => b.score.total - a.score.total);
@@ -48,7 +54,12 @@ async function render() {
       return el("label", {}, `${["1st", "2nd", "3rd"][place - 1]} `, sel);
     }))));
 
-  $("#view").replaceChildren(el("div", { class: "card" }, el("h2", { style: "margin-top:0" }, "Scores"), table),
+  const open = el("input", { type: "checkbox", onchange: (e) => { e.target.disabled = true; setOpen(e.target.checked); } });
+  open.checked = data.open;
+  const gate = el("div", { class: "card" }, el("label", { class: "row", style: "font-weight:600" }, open, "Teams can tick and untick tasks"),
+    el("div", { class: data.open ? "mute" : "err" }, data.open ? "The board is open." : "🔒 The board is locked: teams can look but not change anything. PvP placements still work."));
+
+  $("#view").replaceChildren(gate, el("div", { class: "card" }, el("h2", { style: "margin-top:0" }, "Scores"), table),
     el("h2", {}, "PvP placements"), ...pvp);
 }
 
