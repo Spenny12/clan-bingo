@@ -284,9 +284,24 @@ async function showScoreboard() {
           el("td", {}, p.streak.current > 1 ? `🔥 ${p.streak.current}` : "", p.streak.best ? el("span", { class: "mute" }, ` best ${p.streak.best}`) : "–"),
           el("td", {}, badgeRow(p.badges)))))),
       ticked.length ? "" : el("div", { class: "empty" }, "Nobody has scored yet.")),
-    el("div", { class: "card" }, el("h2", {}, "Badges"), el("div", { class: "key" }, ...Object.values(scores.badges).map((b) =>
-      el("div", {}, el("span", { class: "badge" }, b.icon), el("b", {}, b.name), el("span", { class: "mute" }, ` ${b.desc}`))))));
+    badgeKey());
   drawRace();
+}
+
+/** Every badge, grouped, with how many players hold it. A higher step of a ladder counts as holding the lower ones. */
+function badgeKey() {
+  const order = Object.keys(scores.badges);
+  const holders = (id) => {
+    const { tier } = scores.badges[id];
+    return scores.players.filter((p) => p.badges.some((b) => b === id || (tier && scores.badges[b].tier === tier && order.indexOf(b) > order.indexOf(id)))).length;
+  };
+  const groups = [...new Set(Object.values(scores.badges).map((b) => b.group))];
+  return el("details", { class: "card" }, el("summary", {}, el("h2", { style: "display:inline" }, `Badges (${order.length})`), el("span", { class: "mute" }, " · tap to see them all")),
+    ...groups.map((g) => el("div", {}, el("h3", { class: "kh" }, g), el("div", { class: "key" }, ...order.filter((id) => scores.badges[id].group === g).map((id) => {
+      const b = scores.badges[id], n = holders(id);
+      return el("div", { class: n ? "" : "locked" }, el("span", { class: b.bad ? "badge bad" : "badge" }, b.icon), el("b", {}, b.name), el("span", { class: "mute" }, ` ${b.desc}`),
+        el("span", { class: "by" }, n ? ` · ${n} player${n === 1 ? "" : "s"}` : " · nobody yet"));
+    })))));
 }
 
 function drawRace() {
@@ -384,7 +399,7 @@ function renderPlayers(body) {
 const streakLine = (s) => (s.best ? el("div", { class: "mute" }, s.current > 1 ? `🔥 ${s.current}-day streak (best ${s.best})` : `Best streak: ${s.best} day${s.best === 1 ? "" : "s"}`) : "");
 const badgeRow = (ids) => (ids.length ? el("div", { class: "badges" }, ...ids.map((id) => {
   const b = scores.badges[id];
-  return el("span", { class: "badge", title: `${b.name}: ${b.desc}` }, b.icon);
+  return el("span", { class: b.bad ? "badge bad" : "badge", title: `${b.name}: ${b.desc}` }, b.icon);
 })) : "");
 
 function drawPlayers() {

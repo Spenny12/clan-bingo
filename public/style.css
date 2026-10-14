@@ -58,3 +58,5 @@ table{border-collapse:collapse;width:100%}td,th{padding:6px 8px;border-bottom:1p
 .key{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 12px;font-size:.88rem}.key .badge{margin-right:6px}
 table.lb td{white-space:nowrap}
 .who-dlg{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);padding:16px;max-width:min(360px,calc(100vw - 32px))}.who-dlg::backdrop{background:#0008}
+details.card>summary{cursor:pointer;list-style-position:inside}.kh{font-size:.9rem;margin:12px 0 6px;color:var(--mute)}.key .locked{opacity:.55}
+.badge.bad{border-radius:5px;padding:1px 2px;background:color-mix(in srgb,var(--bad) 16%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--bad) 55%,transparent)}

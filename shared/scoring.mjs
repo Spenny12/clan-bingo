@@ -6,7 +6,7 @@ const byId = new Map([...STANDARD, ...CHUNGUS, ...PRESTIGE, ...INCREMENTAL, ...P
  * Turn a team's ticks into scoring events.
  * @param {Array<{key:string, at:number, by?:string|null}>} ticks   at = unix ms the box was ticked, by = player who got it
  * @param {Array<{task:string, place:number, at:number}>} pvp  placements this team won (place 1..3)
- * @returns {Array<{at:number, points:number, label:string, section:string, by:string|null}>} sorted by time.
+ * @returns {Array<{at:number, points:number, label:string, section:string, task:string, by:string|null, bonus?:true}>} sorted by time.
  *   `by` is the player who ticked the box (the prestige part's ticker for the bonus); null if nobody was named or for PvP.
  */
 export function scoreEvents(ticks, pvp = []) {
@@ -15,25 +15,25 @@ export function scoreEvents(ticks, pvp = []) {
   const events = [];
   const add = (key, e) => events.push({ ...e, by: who.get(key) ?? null });
   for (const t of [...STANDARD, ...CHUNGUS]) {
-    if (at.has(t.id)) add(t.id, { at: at.get(t.id), points: POINTS[t.kind], label: t.name, section: t.kind });
+    if (at.has(t.id)) add(t.id, { at: at.get(t.id), points: POINTS[t.kind], label: t.name, section: t.kind, task: t.id });
   }
   for (const t of PRESTIGE) {
     if (!at.has(t.id)) continue; // no base, no points: not even for a ticked prestige
-    add(t.id, { at: at.get(t.id), points: POINTS.prestigeBase, label: t.name, section: "prestige" });
+    add(t.id, { at: at.get(t.id), points: POINTS.prestigeBase, label: t.name, section: "prestige", task: t.id });
     if (at.has(`${t.id}#p`)) {
       // The bonus is earned when both parts are done, whichever was ticked last.
-      add(`${t.id}#p`, { at: Math.max(at.get(t.id), at.get(`${t.id}#p`)), points: POINTS.prestigeBonus, label: `${t.name} (prestige)`, section: "prestige", bonus: true });
+      add(`${t.id}#p`, { at: Math.max(at.get(t.id), at.get(`${t.id}#p`)), points: POINTS.prestigeBonus, label: `${t.name} (prestige)`, section: "prestige", task: t.id, bonus: true });
     }
   }
   for (const t of INCREMENTAL) {
     for (let i = 1; i <= t.steps; i++) {
       const k = `${t.id}#${i}`;
-      if (at.has(k)) add(k, { at: at.get(k), points: POINTS.step, label: `${t.name} ${i}/${t.steps}`, section: "incremental" });
+      if (at.has(k)) add(k, { at: at.get(k), points: POINTS.step, label: `${t.name} ${i}/${t.steps}`, section: "incremental", task: t.id });
     }
   }
   for (const p of pvp) {
     const task = byId.get(p.task);
-    if (task && POINTS.pvp[p.place - 1]) events.push({ at: p.at, points: POINTS.pvp[p.place - 1], label: `${task.name} (#${p.place})`, section: "pvp", by: null });
+    if (task && POINTS.pvp[p.place - 1]) events.push({ at: p.at, points: POINTS.pvp[p.place - 1], label: `${task.name} (#${p.place})`, section: "pvp", task: p.task, by: null });
   }
   return events.sort((a, b) => a.at - b.at);
 }
