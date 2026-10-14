@@ -23,7 +23,9 @@ export async function onRequestPost({ request, env, params }) {
   }
   if (!(await isOpen(env))) return json({ error: "Ticking is closed by the organiser." }, 423);
   if (body.on) {
-    const by = team.players.includes(body.by) ? body.by : null;
+    // Every tick needs a player, so per-player scores add up to the team's.
+    if (!team.players.includes(body.by)) return json({ error: "Pick who got it in “Ticking as…” first." }, 400);
+    const by = body.by;
     // INSERT OR IGNORE keeps the original time if a box is ticked twice.
     await env.DB.prepare("INSERT OR IGNORE INTO ticks (team, key, at, by) VALUES (?, ?, ?, ?)").bind(team.id, body.key, Date.now(), by).run();
   } else {

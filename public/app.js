@@ -155,11 +155,31 @@ function renderSection(body, sec, pw) {
   paint();
 }
 
-function toggle(key, on, pw) {
-  const by = store.get(`bingo:who:${current.id}`) || undefined;
+async function toggle(key, on, pw) {
+  let by = store.get(`bingo:who:${current.id}`);
+  if (on && !current.players.includes(by)) {
+    by = await askWho();
+    if (!by) return render(pw); // cancelled: leave the box unticked
+    store.set(`bingo:who:${current.id}`, by);
+  }
   return api(`/api/team/${current.id}`, { method: "POST", body: JSON.stringify({ key, on, by }) }, pw)
     .then((s) => { state = s; render(pw); })
     .catch((e) => { alert(e.message); render(pw); });
+}
+
+/** Every tick needs a player. Resolves to the chosen name, or null if cancelled. Picking also sets "Ticking as…". */
+function askWho() {
+  return new Promise((resolve) => {
+    const dlg = el("dialog", { class: "who-dlg" },
+      el("h2", {}, "Who got this?"),
+      el("p", { class: "mute" }, "This also sets “Ticking as…”, so you won't be asked again."),
+      el("div", { class: "row" }, ...current.players.map((p) => el("button", { type: "button", class: "go", onclick: () => done(p) }, p))),
+      el("div", { style: "margin-top:10px" }, el("button", { type: "button", onclick: () => done(null) }, "Cancel")));
+    const done = (p) => { dlg.close(); dlg.remove(); resolve(p); };
+    dlg.addEventListener("cancel", (e) => { e.preventDefault(); done(null); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
 }
 
 const box = (key, pw, label) => {

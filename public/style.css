@@ -57,3 +57,4 @@ table{border-collapse:collapse;width:100%}td,th{padding:6px 8px;border-bottom:1p
 .badges{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px}.badge{font-size:1.05rem;line-height:1;cursor:help}
 .key{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px 12px;font-size:.88rem}.key .badge{margin-right:6px}
 table.lb td{white-space:nowrap}
+.who-dlg{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);padding:16px;max-width:min(360px,calc(100vw - 32px))}.who-dlg::backdrop{background:#0008}
