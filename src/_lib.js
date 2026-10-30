@@ -32,6 +32,19 @@ export async function setOpen(env, open) {
   await env.DB.prepare("INSERT INTO settings (name, value) VALUES ('open', ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value").bind(open ? "1" : "0").run();
 }
 
+/** Record a tick or untick for the organiser's history. Best-effort: the table may not exist until migration 0004 is applied. */
+export async function logTick(env, team, key, action, by) {
+  await env.DB.prepare("INSERT INTO tick_log (team, key, action, by, at) VALUES (?, ?, ?, ?, ?)").bind(team, key, action, by ?? null, Date.now()).run().catch(() => {});
+}
+
+/** The latest ticks and unticks across all teams, newest first. `ok` is false if the table is missing. */
+export async function tickLog(env, limit = 500) {
+  try {
+    const r = await env.DB.prepare("SELECT team, key, action, by, at FROM tick_log ORDER BY id DESC LIMIT ?").bind(limit).all();
+    return { rows: r.results, ok: true };
+  } catch { return { rows: [], ok: false }; }
+}
+
 /**
  * What every team may see about every other team: totals, points by section, a timeline of points
  * (times and amounts only) and the player leaderboard. Never which tasks were done.

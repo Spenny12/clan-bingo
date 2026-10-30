@@ -4,7 +4,9 @@ A points tracker for a clan bingo: four teams, each with a shared password, tick
 
 - **Teams** pick their tab, enter the team password, and tick tasks (optionally saying who got it). Progress is stored with timestamps, so the team page shows points over time and points by section. A **Players** tab breaks the team's points down by player (whoever was picked in "Ticking as…"): running totals, points per day, a per-section table and each player's ticks. Teams only see their own *tasks*.
 - **Scoreboard** (public, no password): every team's total, points by section, a race chart, and a player leaderboard with day streaks and badges (`shared/badges.mjs`). It never shows which tasks a team has done.
-- **Organiser** page (`/organiser/`) shows all team scores, awards PvP placements (3/2/1 points), and has a switch to open or close ticking for everyone.
+- **Organiser** page (`/organiser/`) shows all team scores, awards PvP placements (3/2/1 points), has a switch to open or close ticking for everyone, a **tick history** (every tick and untick, filterable by team) and a searchable list of every rule.
+- **Rules**: general rules and per-task rulings live in `shared/tasks.mjs` (`GENERAL_RULES`, and a `rule` on a task). Each task with a ruling shows an ⓘ with the text on hover.
+- **Charts**: the scoreboard has the race, a section-completion heatmap, points per day, when teams score (UK hours) and a per-team split by player. The Players tab has a section radar per player.
 - **Scoring** (`shared/scoring.mjs`): standard 6, CHUNGUS 10, prestige 5 base + 3 prestige, incremental 1 per step. A prestige tick scores **0 until the base is ticked**.
 - The board lives in `shared/tasks.mjs`.
 

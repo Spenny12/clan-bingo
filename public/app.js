@@ -220,6 +220,14 @@ function taskCard(t, pw) {
     el("div", {}, el("div", { class: "nm" }, t.name, ruleTip(t.rule)), el("div", { class: "sub" }, t.condition), byTag(t.id)));
 }
 
+/** The most points a team could earn in each section (PvP assumes a 1st place in every event). */
+function sectionMax() {
+  const sum = (id, f) => board.sections.find((x) => x.id === id).tasks.reduce((a, t) => a + f(t), 0);
+  return { standard: sum("standard", () => board.points.standard), chungus: sum("chungus", () => board.points.chungus),
+    prestige: sum("prestige", () => board.points.prestigeBase + board.points.prestigeBonus), incremental: sum("incremental", (t) => t.steps * board.points.step),
+    pvp: sum("pvp", () => board.points.pvp[0]) };
+}
+
 function draw() {
   const accent = cssVar("--acc"), mute = cssVar("--mute"), line = cssVar("--line");
   Chart.defaults.color = mute;
@@ -236,10 +244,8 @@ function draw() {
       scales: { x: { type: "linear", ticks: { callback: (v) => new Date(v).toLocaleDateString(undefined, { day: "numeric", month: "short" }), maxTicksLimit: 5 } }, y: { beginAtZero: true } },
     },
   });
-  const sum = (id, f) => board.sections.find((x) => x.id === id).tasks.reduce((a, t) => a + f(t), 0);
-  const max = { Standard: sum("standard", () => board.points.standard), Chungus: sum("chungus", () => board.points.chungus),
-    Prestige: sum("prestige", () => board.points.prestigeBase + board.points.prestigeBonus), Incremental: sum("incremental", (t) => t.steps * board.points.step),
-    PvP: sum("pvp", () => board.points.pvp[0]) };
+  const m = sectionMax();
+  const max = { Standard: m.standard, Chungus: m.chungus, Prestige: m.prestige, Incremental: m.incremental, PvP: m.pvp };
   const s = state.score;
   const mine = { Standard: s.standard, Chungus: s.chungus, Prestige: s.prestige, Incremental: s.incremental, PvP: s.pvp };
   charts.bars = new Chart($("#bars"), {
@@ -275,6 +281,11 @@ async function showScoreboard() {
       el("div", { class: "mute" }, i === 0 ? (lead ? "Leading" : "No points yet") : `${lead - t.score.total} behind 1st`),
       el("div", { class: "mute" }, `${t.ticks} scoring tick${t.ticks === 1 ? "" : "s"}`)))),
     el("div", { class: "card" }, el("h2", {}, "The race"), el("div", { class: "chart" }, el("canvas", { id: "race" }))),
+    sectionHeat(ranked),
+    el("div", { class: "charts" },
+      el("div", { class: "card" }, el("h2", {}, "Points per day"), el("div", { class: "chart" }, el("canvas", { id: "tday" }))),
+      el("div", { class: "card" }, el("h2", {}, "When teams score"), el("p", { class: "mute", style: "margin:0" }, "Points by hour of the day (UK time)."), el("div", { class: "chart" }, el("canvas", { id: "thour" })))),
+    el("div", { class: "card" }, el("h2", {}, "Who's carrying?"), el("p", { class: "mute", style: "margin:0" }, "Each team's points split by player, biggest scorer first. Hover a segment for the name."), el("div", { class: "chart" }, el("canvas", { id: "carry" }))),
     el("div", { class: "card" }, el("h2", {}, "Points by section"), el("div", { class: "tablewrap" }, el("table", {},
       el("tr", {}, el("th", {}, "Team"), ...secs.map((k) => el("th", { class: "n" }, SECTION_NAMES[k])), el("th", { class: "n" }, "Total")),
       ...ranked.map((t) => el("tr", {}, el("td", {}, el("span", { class: "sw", style: `background:${teamColour(t.id)};margin-right:6px` }), t.name),
@@ -292,7 +303,21 @@ async function showScoreboard() {
           el("td", {}, badgeRow(p.badges)))))),
       ticked.length ? "" : el("div", { class: "empty" }, "Nobody has scored yet.")),
     badgeKey());
-  drawRace();
+  drawScoreboard();
+}
+
+/** Teams by section: how much of the available points each team has taken, as shaded cells. */
+function sectionHeat(ranked) {
+  const max = sectionMax(), secs = Object.keys(SECTION_NAMES);
+  const total = secs.reduce((a, k) => a + max[k], 0);
+  const cell = (n, of) => { const pct = of ? Math.round((n / of) * 100) : 0;
+    return el("td", { class: "n", style: `background:color-mix(in srgb,var(--acc) ${Math.round(pct * 0.7)}%,var(--card))` }, `${pct}%`); };
+  return el("div", { class: "card" }, el("h2", {}, "How much of the board each team has taken"),
+    el("p", { class: "mute", style: "margin:0 0 6px" }, "Share of the points available in each section."),
+    el("div", { class: "tablewrap" }, el("table", {},
+      el("tr", {}, el("th", {}, "Team"), ...secs.map((k) => el("th", { class: "n" }, SECTION_NAMES[k])), el("th", { class: "n" }, "Overall")),
+      ...ranked.map((t) => el("tr", {}, el("td", {}, el("span", { class: "sw", style: `background:${teamColour(t.id)};margin-right:6px` }), t.name),
+        ...secs.map((k) => cell(t.score[k], max[k])), cell(t.score.total, total))))));
 }
 
 /** Every badge, grouped, with how many players hold it. A higher step of a ladder counts as holding the lower ones. */
@@ -309,6 +334,51 @@ function badgeKey() {
       return el("div", { class: n ? "" : "locked" }, el("span", { class: b.bad ? "badge bad" : "badge" }, b.icon), el("b", {}, b.name), el("span", { class: "mute" }, ` ${b.desc}`),
         el("span", { class: "by" }, n ? ` · ${n} player${n === 1 ? "" : "s"}` : " · nobody yet"));
     })))));
+}
+
+const UK_HOUR = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "numeric", hourCycle: "h23" });
+/** A team's scoring events as {at, pts}, worked out from the public cumulative timeline. */
+const teamEvents = (t) => t.timeline.map(([at, run], i) => ({ at, pts: run - (i ? t.timeline[i - 1][1] : 0) }));
+
+function drawScoreboard() {
+  drawRace(); // also sets the chart text and grid colours
+  const surface = cssVar("--card");
+  const legend = { position: "bottom", labels: { boxWidth: 10, boxHeight: 10 } };
+  const localDay = (at) => { const d = new Date(at); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+  const evs = scores.teams.map((t) => [t, teamEvents(t)]);
+  const all = evs.flatMap(([, e]) => e);
+
+  const days = [];
+  if (all.length) for (let d = localDay(Math.min(...all.map((e) => e.at))); d <= localDay(Date.now()); d = localDay(d + 36 * 3600e3)) days.push(d);
+  charts.tday = new Chart($("#tday"), {
+    type: "bar",
+    data: { labels: days.map((d) => new Date(d).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })),
+      datasets: evs.map(([t, e]) => ({ label: t.name, backgroundColor: teamColour(t.id), data: days.map((d) => e.filter((x) => localDay(x.at) === d).reduce((a, x) => a + x.pts, 0)) })) },
+    options: { animation: false, maintainAspectRatio: false, plugins: { legend }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
+  });
+
+  charts.thour = new Chart($("#thour"), {
+    type: "line",
+    data: { labels: Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0")),
+      datasets: evs.map(([t, e]) => ({ label: t.name, borderColor: teamColour(t.id), backgroundColor: teamColour(t.id), borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 4, pointBorderColor: surface,
+        data: Array.from({ length: 24 }, (_, h) => e.filter((x) => Number(UK_HOUR.format(x.at)) === h).reduce((a, x) => a + x.pts, 0)) })) },
+    options: { animation: false, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, plugins: { legend }, scales: { y: { beginAtZero: true } } },
+  });
+
+  // One bar per team, split into its players (biggest first). Same hue per team, fading with rank.
+  const ranked = [...scores.teams].sort((a, b) => b.score.total - a.score.total);
+  const rows = ranked.map((t) => ({ t, ps: scores.players.filter((p) => p.team === t.id).sort((a, b) => b.total - a.total) }));
+  const alpha = ["ff", "bb", "88", "55"];
+  charts.carry = new Chart($("#carry"), {
+    type: "bar",
+    data: { labels: rows.map((r) => r.t.name),
+      datasets: Array.from({ length: Math.max(...rows.map((r) => r.ps.length)) }, (_, i) => ({
+        label: `#${i + 1} scorer`, names: rows.map((r) => r.ps[i]?.player || ""), data: rows.map((r) => r.ps[i]?.total || 0),
+        backgroundColor: rows.map((r) => teamColour(r.t.id) + alpha[Math.min(i, 3)]), borderColor: surface, borderWidth: 1 })) },
+    options: { indexAxis: "y", animation: false, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { filter: (i) => i.raw > 0, callbacks: { label: (i) => `${i.dataset.names[i.dataIndex]}: ${i.raw} pts` } } },
+      scales: { x: { stacked: true, beginAtZero: true }, y: { stacked: true, grid: { display: false } } } },
+  });
 }
 
 function drawRace() {
@@ -359,7 +429,8 @@ function renderPlayers(body) {
     tiles,
     el("div", { class: "charts" },
       el("div", { class: "card" }, el("h2", {}, "Points over time, by player"), el("div", { class: "chart" }, el("canvas", { id: "pline" }))),
-      el("div", { class: "card" }, el("h2", {}, "Points per day, by player"), el("div", { class: "chart" }, el("canvas", { id: "pday" })))),
+      el("div", { class: "card" }, el("h2", {}, "Points per day, by player"), el("div", { class: "chart" }, el("canvas", { id: "pday" }))),
+      el("div", { class: "card" }, el("h2", {}, "Where each player scores"), el("p", { class: "mute", style: "margin:0" }, "Points by section: spot who is the clue person, the skiller, the PvMer."), el("div", { class: "chart" }, el("canvas", { id: "pradar" })))),
     table, feed);
 
   function paint() {
@@ -436,6 +507,15 @@ function drawPlayers() {
     },
   });
 
+  // Section profile per player: a radar of points in each section.
+  const secKeys = Object.keys(SECTION_NAMES);
+  charts.pradar = new Chart($("#pradar"), {
+    type: "radar",
+    data: { labels: secKeys.map((k) => SECTION_NAMES[k]),
+      datasets: state.byPlayer.filter((r) => r.total > 0).map((r) => ({ label: nameOf(r), data: secKeys.map((k) => r.sections[k]), borderColor: colourFor(nameOf(r)), backgroundColor: colourFor(nameOf(r)) + "33", borderWidth: 2, pointRadius: 2 })) },
+    options: { animation: false, maintainAspectRatio: false, plugins: { legend }, scales: { r: { beginAtZero: true, ticks: { backdropColor: "transparent", precision: 0 } } } },
+  });
+
   // Points per calendar day, stacked by player.
   const dayOf = (at) => { const d = new Date(at); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
   const days = [];
@@ -455,7 +535,7 @@ const themeBtn = $("#theme");
 themeBtn.textContent = themeLabel();
 themeBtn.onclick = () => { cycleTheme(); themeBtn.textContent = themeLabel(); };
 window.addEventListener("themechange", () => {
-  const redraw = !current ? scores && drawRace : state && { overview: draw, players: drawPlayers }[ui.tab];
+  const redraw = !current ? scores && drawScoreboard : state && { overview: draw, players: drawPlayers }[ui.tab];
   if (!redraw) return;
   for (const c of Object.values(charts)) c.destroy();
   charts = {};
