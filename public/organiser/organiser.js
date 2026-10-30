@@ -61,41 +61,6 @@ function rulesCard() {
   return d;
 }
 
-/** "Mining" / "Gauntleting (prestige)" / "Monkeys 3/6" from a tick key. */
-function labelOf(key) {
-  const [id, part] = key.split("#");
-  const t = board.sections.flatMap((s) => s.tasks).find((x) => x.id === id);
-  if (!t) return key;
-  if (part === "p") return `${t.name} (prestige)`;
-  return part ? `${t.name} ${part}/${t.steps}` : t.name;
-}
-
-/** Every tick and untick, newest first, with a team filter. Open state and filter survive re-renders. */
-let logOpen = false, logTeam = "";
-const whenFmt = (at) => new Date(at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-function logCard() {
-  const names = Object.fromEntries(data.teams.map((t) => [t.id, t.name]));
-  const list = el("div", { class: "tablewrap" });
-  const paint = () => {
-    const rows = data.log.filter((r) => !logTeam || r.team === logTeam);
-    list.replaceChildren(!data.logOk ? el("div", { class: "err" }, "The history table is missing: apply migrations/0004_tick_log.sql to D1 (npx wrangler d1 migrations apply clan-bingo --remote). Nothing is lost; ticks just aren't being recorded yet.")
-      : rows.length ? el("table", {}, el("tr", {}, ...["When", "Team", "Player", "", "Task"].map((h) => el("th", {}, h))),
-        ...rows.map((r) => el("tr", {}, el("td", { class: "mute" }, whenFmt(r.at)), el("td", {}, names[r.team] || r.team), el("td", {}, r.by || "–"),
-          el("td", {}, r.action === "tick" ? "✅ ticked" : "↩ unticked"), el("td", {}, el("b", {}, labelOf(r.key))))))
-      : el("div", { class: "empty" }, "Nothing yet."));
-  };
-  const pick = el("select", { "aria-label": "Filter by team", onchange: (e) => { logTeam = e.target.value; paint(); } },
-    el("option", { value: "" }, "All teams"), ...data.teams.map((t) => el("option", { value: t.id }, t.name)));
-  pick.value = logTeam;
-  const d = el("details", { class: "card" }, el("summary", {}, el("h2", { style: "display:inline" }, `Tick history (${data.log.length}${data.log.length >= 500 ? "+" : ""})`)),
-    el("p", { class: "mute" }, "Every tick and untick, newest first. “Player” is whoever was picked in “Ticking as…” at the time. Untick-then-retick shows up here even though the board only keeps the latest time."),
-    pick, list);
-  d.open = logOpen;
-  d.addEventListener("toggle", () => { logOpen = d.open; });
-  paint();
-  return d;
-}
-
 async function render() {
   board ||= await (await fetch("/api/tasks")).json();
   const pvpTasks = board.sections.find((s) => s.id === "pvp").tasks;
@@ -118,7 +83,7 @@ async function render() {
     el("div", { class: data.open ? "mute" : "err" }, data.open ? "The board is open." : "🔒 The board is locked: teams can look but not change anything. PvP placements still work."));
 
   $("#view").replaceChildren(gate, el("div", { class: "card" }, el("h2", { style: "margin-top:0" }, "Scores"), table),
-    el("h2", {}, "PvP placements"), ...pvp, logCard(), rulesCard());
+    el("h2", {}, "PvP placements"), ...pvp, rulesCard());
 }
 
 (async () => {

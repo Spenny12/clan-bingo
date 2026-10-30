@@ -349,6 +349,10 @@ const fmtDate = (at) => new Date(at).toLocaleDateString(undefined, { weekday: "s
 /** Where each team is heading if it keeps its pace to the end date. */
 function projectionCard(ranked) {
   const b = scores.bingo, byId = Object.fromEntries(scores.teams.map((t) => [t.id, t]));
+  if (b.start != null && b.now < b.start) {
+    return el("div", { class: "card" }, el("h2", {}, "Where it's heading"),
+      el("p", { class: "mute", style: "margin:0" }, `The bingo hasn't started yet. It begins at midnight going into ${fmtDate(b.start)} and runs to the end of ${fmtDate(b.end)}. Each team's projected finish will appear here once the points start coming in.`));
+  }
   const rows = ranked.map((t) => byId[t.id]).sort((x, y) => y.projection.projected - x.projection.projected);
   const range = (p) => (p.low === p.high ? "" : el("span", { class: "mute" }, ` (${p.low} to ${p.high})`));
   return el("div", { class: "card" }, el("h2", {}, "Where it's heading"),
@@ -413,7 +417,7 @@ function drawScoreboard() {
 
   // Solid line so far, dashed line to the projected finish.
   const b = scores.bingo, xmin = b.start ?? b.now - 864e5;
-  charts.proj = new Chart($("#proj"), {
+  if ($("#proj")) charts.proj = new Chart($("#proj"), {
     type: "line",
     data: { datasets: scores.teams.flatMap((t) => [
       { label: t.name, borderColor: teamColour(t.id), backgroundColor: teamColour(t.id), borderWidth: 2, stepped: true, pointRadius: 0,

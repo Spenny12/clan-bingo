@@ -1,13 +1,12 @@
 import { TEAMS, PVP } from "../../shared/tasks.mjs";
-import { json, checkPassword, teamState, isOpen, setOpen, tickLog } from "../_lib.js";
+import { json, checkPassword, teamState, isOpen, setOpen } from "../_lib.js";
 
 async function overview(env) {
-  const [teams, open, log] = await Promise.all([
+  const [teams, open] = await Promise.all([
     Promise.all(TEAMS.map(async (t) => ({ id: t.id, name: t.name, players: t.players, ...(await teamState(env, t)) }))),
     isOpen(env),
-    tickLog(env),
   ]);
-  return { teams, open, log: log.rows, logOk: log.ok };
+  return { teams, open };
 }
 
 export async function onRequestGet({ request, env }) {
