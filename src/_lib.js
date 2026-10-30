@@ -1,6 +1,7 @@
-import { TEAMS } from "../shared/tasks.mjs";
+import { TEAMS, BINGO } from "../shared/tasks.mjs";
 import { breakdown, scoreEvents, playerBreakdown } from "../shared/scoring.mjs";
 import { leaderboard, BADGES } from "../shared/badges.mjs";
+import { projection, funFacts } from "../shared/insights.mjs";
 
 export const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -59,14 +60,22 @@ export async function scoreboard(env) {
     const mine = ticks.results.filter((r) => r.team === t.id), placed = pvp.results.filter((r) => r.team === t.id);
     return { id: t.id, name: t.name, players: t.players, events: scoreEvents(mine, placed), score: breakdown(mine, placed) };
   });
+  const out = teams.map((t) => {
+    let run = 0;
+    return { id: t.id, name: t.name, score: t.score, ticks: t.events.length, timeline: t.events.map((e) => [e.at, (run += e.points)]) };
+  });
+  const players = leaderboard(teams);
+  // The bingo's start is BINGO.start, or failing that the first tick anyone made.
+  const firstTick = Math.min(...out.map((t) => t.timeline[0]?.[0] ?? Infinity));
+  const start = BINGO.start ?? (Number.isFinite(firstTick) ? firstTick : null);
+  const now = Date.now();
   return {
     open,
-    teams: teams.map((t) => {
-      let run = 0;
-      return { id: t.id, name: t.name, score: t.score, ticks: t.events.length, timeline: t.events.map((e) => [e.at, (run += e.points)]) };
-    }),
-    players: leaderboard(teams),
+    teams: out.map((t) => ({ ...t, projection: projection(t.timeline, { start, end: BINGO.end, now }) })),
+    players,
     badges: BADGES,
+    bingo: { start, end: BINGO.end, now, startIsFirstTick: BINGO.start == null },
+    facts: funFacts(out, players, now),
   };
 }
 

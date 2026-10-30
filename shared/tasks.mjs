@@ -4,6 +4,12 @@
 
 export const POINTS = { standard: 6, chungus: 10, prestigeBase: 5, prestigeBonus: 3, step: 1, pvp: [3, 2, 1] };
 
+/**
+ * When the bingo runs. `end` is the end of Sunday 22 November 2026 (UK time is GMT then).
+ * `start` is when it began; leave it null to use the first tick anyone makes, or set it, e.g. Date.parse("2026-10-31T00:00:00Z").
+ */
+export const BINGO = { start: null, end: Date.parse("2026-11-22T23:59:59Z") };
+
 export const TEAMS = [
   { id: "crystal", name: "Crystal Gimpling", players: ["Adam", "Spenny", "Ryan"], env: "PASS_CRYSTAL" },
   { id: "kizz", name: "Kizz on my face", players: ["Kier", "James", "Jordan"], env: "PASS_KIZZ" },

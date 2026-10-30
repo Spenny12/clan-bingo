@@ -106,12 +106,12 @@ function render(pw) {
   who.value = store.get(`bingo:who:${current.id}`) || "";
   who.addEventListener("change", () => store.set(`bingo:who:${current.id}`, who.value));
 
-  const tabs = [["overview", "Overview"], ["players", "Players"], ...board.sections.map((sec) => [sec.id, sec.title])];
+  const tabs = [["overview", "Overview"], ["players", "Players"], ["left", "What's left"], ...board.sections.map((sec) => [sec.id, sec.title])];
   const seg = el("div", { class: "seg", role: "tablist" }, ...tabs.map(([id, label]) => {
     const sec = board.sections.find((x) => x.id === id);
     const [d, t] = sec ? sectionCount(sec) : [null, null];
     return el("button", { role: "tab", "aria-selected": String(ui.tab === id), onclick: () => { ui.tab = id; window.scrollTo(0, 0); render(pw); } },
-      label, sec ? el("small", {}, `${d}/${t}`) : "");
+      label, sec ? el("small", {}, `${d}/${t}`) : id === "left" ? el("small", {}, `${leftTotal()} pts`) : "");
   }));
 
   const bar = el("div", { class: "bar" },
@@ -128,6 +128,7 @@ function render(pw) {
   view.replaceChildren(el("div", { class: "sticky" }, bar, seg, closed), rules, body);
   if (ui.tab === "overview") renderOverview(body);
   else if (ui.tab === "players") renderPlayers(body);
+  else if (ui.tab === "left") renderLeft(body, pw);
   else renderSection(body, board.sections.find((x) => x.id === ui.tab), pw);
 }
 
@@ -144,6 +145,41 @@ function renderOverview(body) {
       recent.length ? el("ul", { class: "recent" }, ...recent.map((e) => el("li", {}, el("span", {}, e.label, e.by ? el("span", { class: "by" }, ` · ${e.by}`) : ""), el("span", { class: "mute" }, `+${e.points} · ${when(e.at)}`))))
         : el("div", { class: "empty" }, "Nothing ticked yet. Pick a tab above and get going.")));
   draw();
+}
+
+/** Points this team can still earn on a task (PvP is awarded by the organiser, so it isn't counted). A prestige bonus only scores once the base is ticked. */
+function pointsLeft(t) {
+  const p = board.points;
+  if (t.kind === "incremental") return Array.from({ length: t.steps }, (_, i) => (has(`${t.id}#${i + 1}`) ? 0 : p.step)).reduce((a, b) => a + b, 0);
+  if (t.kind === "prestige") return (has(t.id) ? 0 : p.prestigeBase) + (has(t.id) && has(`${t.id}#p`) ? 0 : p.prestigeBonus);
+  return has(t.id) ? 0 : p[t.kind];
+}
+const leftSections = () => board.sections.filter((s) => s.id !== "pvp");
+const leftTotal = () => leftSections().reduce((a, s) => a + s.tasks.reduce((b, t) => b + pointsLeft(t), 0), 0);
+
+/** Everything still open, biggest prizes first, so a team can see where its next points are. */
+function renderLeft(body, pw) {
+  const secs = leftSections();
+  const rows = secs.flatMap((sec) => sec.tasks.map((t) => ({ t, sec, left: pointsLeft(t) }))).filter((r) => r.left > 0);
+  const total = rows.reduce((a, r) => a + r.left, 0);
+  const list = el("div", {});
+  const paint = () => {
+    const q = ui.q.trim().toLowerCase();
+    const shown = rows.filter((r) => !q || `${r.t.name} ${r.t.condition} ${r.t.prestige || ""}`.toLowerCase().includes(q));
+    const tiers = [...new Set(shown.map((r) => r.left))].sort((a, b) => b - a);
+    list.replaceChildren(...(tiers.length ? tiers.map((n) => {
+      const group = shown.filter((r) => r.left === n);
+      return el("div", {}, el("h3", { class: "kh" }, `${$pts(n)} left · ${group.length} task${group.length === 1 ? "" : "s"}`),
+        el("div", { class: "grid" }, ...group.map((r) => el("div", {}, el("div", { class: "by", style: "margin:0 2px 2px" }, r.sec.title), taskCard(r.t, pw)))));
+    }) : [el("div", { class: "empty" }, rows.length ? "Nothing matches." : "Everything is done. Nothing left to tick.")]));
+  };
+  const search = el("input", { type: "search", placeholder: "Search what's left…", value: ui.q, "aria-label": "Search what's left", oninput: (e) => { ui.q = e.target.value; paint(); } });
+  body.append(
+    el("div", { class: "card" }, el("h2", {}, `${$pts(total)} still to win`),
+      el("div", { class: "chips" }, ...secs.map((sec) => el("span", { class: "chip" }, `${sec.title.replace(/ tasks$/, "")} ${sec.tasks.reduce((a, t) => a + pointsLeft(t), 0)}`))),
+      el("p", { class: "mute", style: "margin:8px 0 0" }, "Open tasks grouped by the points still on them (a half-done incremental counts only its remaining steps). PvP placements are awarded by the organiser, so they aren't counted.")),
+    el("div", { class: "tools" }, search), list);
+  paint();
 }
 
 function renderSection(body, sec, pw) {
@@ -281,7 +317,9 @@ async function showScoreboard() {
       el("div", { class: "mute" }, i === 0 ? (lead ? "Leading" : "No points yet") : `${lead - t.score.total} behind 1st`),
       el("div", { class: "mute" }, `${t.ticks} scoring tick${t.ticks === 1 ? "" : "s"}`)))),
     el("div", { class: "card" }, el("h2", {}, "The race"), el("div", { class: "chart" }, el("canvas", { id: "race" }))),
+    projectionCard(ranked),
     sectionHeat(ranked),
+    factsCard(),
     el("div", { class: "charts" },
       el("div", { class: "card" }, el("h2", {}, "Points per day"), el("div", { class: "chart" }, el("canvas", { id: "tday" }))),
       el("div", { class: "card" }, el("h2", {}, "When teams score"), el("p", { class: "mute", style: "margin:0" }, "Points by hour of the day (UK time)."), el("div", { class: "chart" }, el("canvas", { id: "thour" })))),
@@ -304,6 +342,31 @@ async function showScoreboard() {
       ticked.length ? "" : el("div", { class: "empty" }, "Nobody has scored yet.")),
     badgeKey());
   drawScoreboard();
+}
+
+const fmtDate = (at) => new Date(at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+
+/** Where each team is heading if it keeps its pace to the end date. */
+function projectionCard(ranked) {
+  const b = scores.bingo, byId = Object.fromEntries(scores.teams.map((t) => [t.id, t]));
+  const rows = ranked.map((t) => byId[t.id]).sort((x, y) => y.projection.projected - x.projection.projected);
+  const range = (p) => (p.low === p.high ? "" : el("span", { class: "mute" }, ` (${p.low} to ${p.high})`));
+  return el("div", { class: "card" }, el("h2", {}, "Where it's heading"),
+    el("p", { class: "mute", style: "margin:0 0 6px" }, `A straight-line guess at the final score if each team keeps up its pace until the end on ${fmtDate(b.end)}. Early on it swings a lot.`),
+    el("div", { class: "chart" }, el("canvas", { id: "proj" })),
+    el("div", { class: "tablewrap" }, el("table", {},
+      el("tr", {}, el("th", {}, "Team"), ...["Now", "Per day", "Last 3 days", "Projected finish"].map((h) => el("th", { class: "n" }, h))),
+      ...rows.map((t) => el("tr", {}, el("td", {}, el("span", { class: "sw", style: `background:${teamColour(t.id)};margin-right:6px` }), t.name),
+        el("td", { class: "n" }, String(t.projection.total)), el("td", { class: "n" }, String(t.projection.pace)), el("td", { class: "n" }, String(t.projection.recent)),
+        el("td", { class: "n" }, el("b", {}, String(t.projection.projected)), range(t.projection)))))),
+    el("p", { class: "mute", style: "margin:6px 0 0" }, `${Math.max(0, Math.round((b.end - b.now) / 864e5))} days left. ${b.startIsFirstTick ? "Pace counts from the first tick anyone made." : `Pace counts from ${fmtDate(b.start)}.`}`));
+}
+
+/** Little stories from the scores. Public: only times and totals, never which tasks. */
+function factsCard() {
+  if (!scores.facts.length) return "";
+  return el("div", { class: "card" }, el("h2", {}, "Fun facts"),
+    el("div", { class: "facts" }, ...scores.facts.map((f) => el("div", { class: "fact" }, el("span", { class: "ico" }, f.icon), el("div", {}, el("b", {}, f.title), el("div", { class: "mute" }, f.text))))));
 }
 
 /** Teams by section: how much of the available points each team has taken, as shaded cells. */
@@ -347,6 +410,24 @@ function drawScoreboard() {
   const localDay = (at) => { const d = new Date(at); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
   const evs = scores.teams.map((t) => [t, teamEvents(t)]);
   const all = evs.flatMap(([, e]) => e);
+
+  // Solid line so far, dashed line to the projected finish.
+  const b = scores.bingo, xmin = b.start ?? b.now - 864e5;
+  charts.proj = new Chart($("#proj"), {
+    type: "line",
+    data: { datasets: scores.teams.flatMap((t) => [
+      { label: t.name, borderColor: teamColour(t.id), backgroundColor: teamColour(t.id), borderWidth: 2, stepped: true, pointRadius: 0,
+        data: [{ x: xmin, y: 0 }, ...t.timeline.map(([x, y]) => ({ x, y })), { x: b.now, y: t.projection.total }] },
+      { label: `${t.name} (projected)`, proj: true, borderColor: teamColour(t.id), backgroundColor: teamColour(t.id), borderWidth: 2, borderDash: [6, 4], pointRadius: [0, 4], pointStyle: "circle",
+        data: [{ x: b.now, y: t.projection.total }, { x: b.end, y: t.projection.projected }] },
+    ]) },
+    options: {
+      parsing: false, animation: false, maintainAspectRatio: false, interaction: { mode: "nearest", intersect: false },
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, filter: (i, d) => !d.datasets[i.datasetIndex].proj } },
+        tooltip: { callbacks: { title: (i) => new Date(i[0].raw.x).toLocaleString(), label: (i) => `${i.dataset.label}: ${i.raw.y} pts` } } },
+      scales: { x: { type: "linear", min: xmin, max: b.end, ticks: { callback: (v) => new Date(v).toLocaleDateString(undefined, { day: "numeric", month: "short" }), maxTicksLimit: 8 } }, y: { beginAtZero: true } },
+    },
+  });
 
   const days = [];
   if (all.length) for (let d = localDay(Math.min(...all.map((e) => e.at))); d <= localDay(Date.now()); d = localDay(d + 36 * 3600e3)) days.push(d);
