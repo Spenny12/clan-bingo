@@ -12,7 +12,10 @@ export const TEAMS = [
 ];
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const std = (kind, list) => list.map(([name, condition]) => ({ id: `${kind}:${slug(name)}`, kind, name, condition }));
+/** `rule`, when given, is the clarifying ruling from Sheet2 — shown as a hover note on the task's tile. */
+const std = (kind, list) => list.map(([name, condition, rule]) => ({ id: `${kind}:${slug(name)}`, kind, name, condition, ...(rule ? { rule } : {}) }));
+
+const CLUE_STACK = "No stacking clues or caskets.";
 
 export const STANDARD = std("standard", [
   ["Masks", "Get a Mask of Ranuul and a Shaman Mask"],
@@ -20,38 +23,38 @@ export const STANDARD = std("standard", [
   ["Moon Chest", "Get both halves of the Lunar Key"],
   ["Back to Revs", "Get an Ancient Relic, Effigy or Medallion"],
   ["Return of the Champ Scroll", "Get any Champion scroll"],
-  ["Spider Clogs", "Get 1 unique from each of Venenatis, Sarachnis, Araxxor"],
+  ["Spider Clogs", "Get 1 unique from each of Venenatis, Sarachnis, Araxxor", "Not TP, not coagulated venom."],
   ["Yamadabadoo", "Get 1 piece of Oathplate or Soulflame Horn"],
-  ["Unsired", "Get 2 Bludgeon pieces"],
+  ["Unsired", "Get 2 Bludgeon pieces", "No stacking unsired."],
   ["Woodcutting", "1m Woodcutting xp"],
   ["Runecrafting", "1m Runecrafting xp"],
   ["Mining", "1m Mining xp"],
-  ["Agility", "1m Agility xp"],
+  ["Agility", "1m Agility xp", "No stacking Brimhaven agility tickets."],
   ["Sailing!!!!", "2m Sailing xp"],
-  ["Buttplug", "Get a Masterwand or Mage's Book"],
+  ["Buttplug", "Get a Masterwand or Mage's Book", "Masterwand must be built from scratch — can't have pizazz points banked in any category that's a requirement for buying any non-rune item."],
   ["Twinflame", "Get both Twinflame staff pieces"],
-  ["What are those???", "Get a Medium Clue boots reward"],
+  ["What are those???", "Get a Medium Clue boots reward", CLUE_STACK],
   ["Ironman", "Get a Zombie Helmet, Axe, and Warped Sceptre"],
-  ["Hawk Cluah", "Get a Dragon Mask from an Elite Clue or Demon Mask from a Master Clue"],
-  ["EZ", "Get a Ham Joint or Flared Trousers from an Easy Clue"],
-  ["GG", "Get a GGs Unique"],
+  ["Hawk Cluah", "Get a Dragon Mask from an Elite Clue or Demon Mask from a Master Clue", CLUE_STACK],
+  ["EZ", "Get a Ham Joint or Flared Trousers from an Easy Clue", CLUE_STACK],
+  ["GG", "Get a GGs Unique", "Dust and maul drops don't count."],
   ["Yet another Forgotten 4", "Any piece of virtus"],
-  ["Bookworm", "Get any Tome"],
-  ["Boss Pet", "Get any Boss Pet"],
-  ["Skilling Pet", "Get any Skilling Pet"],
-  ["PMs", "Get one drop from each Moon"],
+  ["Bookworm", "Get any Tome", "No stacking searches."],
+  ["Boss Pet", "Get any Boss Pet", "No Beefy Bess, no Chaos Elemental pet."],
+  ["Skilling Pet", "Get any Skilling Pet", "No Chompy pet."],
+  ["PMs", "Get one drop from each Moon", "No preloading a chest."],
   ["ToB", "Get a ToB purple"],
   ["CoX", "Get a CoX purple"],
   ["ToA", "Get a ToA purple"],
-  ["Mad Angel", "Get a Mad Angel unique"],
+  ["Mad Angel", "Get a Mad Angel unique", "No TP or dust."],
   ["Synapse", "Get a Synapse"],
-  ["Maggot King", "Get a Maggot King Unique"],
-  ["GotR", "Get two of: Dye, Lantern, Abyssal Needle, Pet"],
+  ["Maggot King", "Get a Maggot King Unique", "Must be the pet, Elder Fang, or Kisten."],
+  ["GotR", "Get two of: Dye, Lantern, Abyssal Needle, Pet", "No stacking; can't buy using pearls."],
   ["We <3 Sailing!", "Get EITHER Drag Cannon or Salvaging Hook AND Bottled Storm"],
   ["We <3 Trawling!", "Get 1 of any Trawling Big Fish"],
-  ["Giants", "Get Bryo Essence or Giants Club"],
-  ["Capybara Gaming", "Get Fletching Knife, Jewellers Chisel, and Prescription Goggles/Storage"],
-  ["Hydra", "Any Hydra unique"],
+  ["Giants", "Get Bryo Essence or Giants Club", "No stacking keys."],
+  ["Capybara Gaming", "Get Fletching Knife, Jewellers Chisel, and Prescription Goggles/Storage", "Can't stack offerings, can't buy the knife with research points, can't stack Mixology resin (be reasonable)."],
+  ["Hydra", "Any Hydra unique", "Must be from the boss."],
   ["Sailing PvM", "Get a Shellbane unique + Horn of Plenty OR Aquanite Tendon"],
   ["Elf Style", "Pickpocket an Enhanced Crystal Teleport Seed"],
   ["Zealot", "Get full Zealot Robes"],
@@ -59,37 +62,37 @@ export const STANDARD = std("standard", [
 ]);
 
 export const CHUNGUS = std("chungus", [
-  ["Rare Clue", "Get a Rare Clue drop"],
+  ["Rare Clue", "Get a Rare Clue drop", `${CLUE_STACK} Counts: 3rd Age, Gilded, Ring of Coins/Nature, Monk's Robe (g), lava dragon mask, any tux piece, drag kite or platebody orn kit, bloodhound, mummy and ankou, dhide shields.`],
   ["Back to GWD", "Get a unique (not Godsword Shard) from each GWD Boss excluding Nex"],
-  ["Dragon Warrior", "Get a Dragon Full Helm, Dragon Metal Lump, or Dragon Metal Slice"],
-  ["Capes", "Complete 1x Inferno or 2x Colo or 5x Fight Caves"],
-  ["Nightmare", "Any Nightmare unique"],
+  ["Dragon Warrior", "Get a Dragon Full Helm, Dragon Metal Lump, or Dragon Metal Slice", "No stacking chewed bones."],
+  ["Capes", "Complete 1x Inferno or 2x Colo or 5x Fight Caves", "Can't be mid-run when the bingo starts."],
+  ["Nightmare", "Any Nightmare unique", "Anything but the tablet."],
   ["Money Maker", "Get an Amulet of Eternal Glory"],
   ["Superior Slayer", "Get an Imbued Heart or Eternal Slayer Gem"],
-  ["Autism Complete", "Get a Soulreaper Axe"],
-  ["Doom", "Get a glowie hole from Doom"],
+  ["Autism Complete", "Get a Soulreaper Axe", "Have to get all 4 drops."],
+  ["Doom", "Get a glowie hole from Doom", "Dupe pet counts."],
   ["The Adam Task", "Get a Ring of Endurance"],
-  ["Voidwaker", "Build a Voidwaker"],
-  ["Paint", "Get Salvors, Anglers, Barracuda, or Inky Paint"],
+  ["Voidwaker", "Build a Voidwaker", "Have to get all the drops."],
+  ["Paint", "Get Salvors, Anglers, Barracuda, or Inky Paint", "Drops only — not bought."],
 ]);
 
 export const PRESTIGE = [
   ["Blood Torva", "Bandos Tassets or Chestplate", "Kill any Awakened Boss"],
   ["Ancient Ceremony", "Get 3 unique Ancient Ceremonial Robes", "Get a full set of Ancient Ceremonial"],
-  ["Gauntleting", "Get 3 Armour and/or Weapon Seeds", "Get an Enhanced Seed"],
+  ["Gauntleting", "Get 3 Armour and/or Weapon Seeds", "Get an Enhanced Seed", "Can't preload."],
   ["Rev weapon", "Get a rev weapon upgrade", "Get the respective rev weapon"],
-  ["Gone Fishing", "Golden Tench", "Any Fishing Utility drop from Tempoross"],
+  ["Gone Fishing", "Golden Tench", "Any Fishing Utility drop from Tempoross", "Can't buy temp drops; 25 pages counts as a dupe drop."],
   ["Build-a-Godsword", "Get any God Hilt", "Get each Godsword piece"],
-  ["Ed's Fave", "Get all DK rings", "Add a vestige to any of them"],
-  ["Barrows Bukkake", "Get a Barrows drop for each slot", "All from the same bro"],
-  ["Dragonslayer 3", "Get a unique from Huey and Zulrah", "Get a Draconic/Skeletal Visage"],
+  ["Ed's Fave", "Get all DK rings", "Add a vestige to any of them", "Can just be 3 ring drops across the team — doesn't physically need to be a vestige."],
+  ["Barrows Bukkake", "Get a Barrows drop for each slot", "All from the same bro", "Can't preload."],
+  ["Dragonslayer 3", "Get a unique from Huey and Zulrah", "Get a Draconic/Skeletal Visage", "Not seeds, soiled pages, hide, TPs, or scales."],
   ["Purples", "Get any Raid Purple", "One from two different raids"],
   ["Spider Monkeys", "Get 2 Zenytes", "Araxyte Fang or Elder Venator Fang"],
   ["Tools of the Trade", "Get a Dragon Harpoon, Axe, and Pickaxe", "Get a Smouldering Stone"],
   ["Reddit", "Get Mole Slippers", "Get Holy Sandals"],
   ["Venator Bow", "Get 2 Venator Shards", "Get 3 Shards"],
-  ["Really scary", "Make an Odium or Malediction Ward", "Make the other one"],
-].map(([name, condition, prestige]) => ({ id: `prestige:${slug(name)}`, kind: "prestige", name, condition, prestige }));
+  ["Really scary", "Make an Odium or Malediction Ward", "Make the other one", "Have to get each of the drops."],
+].map(([name, condition, prestige, rule]) => ({ id: `prestige:${slug(name)}`, kind: "prestige", name, condition, prestige, ...(rule ? { rule } : {}) }));
 
 // `steps` is the number of ticks a task has (one point each). Ticks are stored per step.
 export const INCREMENTAL = [
@@ -99,8 +102,8 @@ export const INCREMENTAL = [
   ["Autism in Progress", "Get each piece of the Soulreaper Axe", 4],
   ["Lord of the Rings pt 2", "Callisto, Vetion, Venenatis Ring", 3],
   ["Slops", "Any item that can be mounted on a Head display and Araxyte head", 7],
-  ["Monkeys", "Each monkey backpack", 6],
-].map(([name, condition, steps]) => ({ id: `inc:${slug(name)}`, kind: "incremental", name, condition, steps }));
+  ["Monkeys", "Each monkey backpack", 6, "Scoring is based on the laps done during the bingo, not actually claiming the item."],
+].map(([name, condition, steps, rule]) => ({ id: `inc:${slug(name)}`, kind: "incremental", name, condition, steps, ...(rule ? { rule } : {}) }));
 
 export const PVP = [
   ["Duel Arena 1v1 Tourney", "Placement: 3 / 2 / 1 points"],
@@ -115,7 +118,7 @@ export const SECTIONS = [
   { id: "chungus", title: "CHUNGUS MODE", blurb: "10 points each", tasks: CHUNGUS },
   { id: "prestige", title: "Prestige", blurb: "5 for the base, +3 for the prestige (only counts once the base is done)", tasks: PRESTIGE },
   { id: "incremental", title: "Incremental", blurb: "1 point per step", tasks: INCREMENTAL },
-  { id: "pvp", title: "PvP", blurb: "3 / 2 / 1 points for 1st / 2nd / 3rd, awarded by the organiser", tasks: PVP },
+  { id: "pvp", title: "PvP", blurb: "3 / 2 / 1 points for 1st / 2nd / 3rd, awarded by the organiser. 1 PvP event a week on Sunday — starting with Duel Arena, LMS, and Clan Wars.", tasks: PVP },
 ];
 
 /** Every tickable key a team may submit: `<task id>` for most tasks, `<id>#p` for the prestige part, `<id>#<n>` for steps. */

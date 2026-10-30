@@ -182,6 +182,9 @@ function askWho() {
   });
 }
 
+/** A small ⓘ next to a task's name, with the Sheet2 ruling as its hover title — same idiom as the badge icons. */
+const ruleTip = (rule) => (rule ? el("span", { class: "info", title: rule }, "ⓘ") : "");
+
 const box = (key, pw, label) => {
   const input = el("input", { type: "checkbox", checked: has(key), disabled: !state.open, onchange: (e) => toggle(key, e.target.checked, pw) });
   return label ? el("label", {}, input, label) : input;
@@ -195,7 +198,7 @@ function taskCard(t, pw) {
   }
   if (t.kind === "incremental") {
     const n = Array.from({ length: t.steps }, (_, i) => has(`${t.id}#${i + 1}`)).filter(Boolean).length;
-    return el("div", { class: "task" + (n === t.steps ? " done" : "") }, el("div", {}, el("div", { class: "nm" }, `${t.name} (${n}/${t.steps})`),
+    return el("div", { class: "task" + (n === t.steps ? " done" : "") }, el("div", {}, el("div", { class: "nm" }, `${t.name} (${n}/${t.steps})`, ruleTip(t.rule)),
       el("div", { class: "sub" }, t.condition),
       el("div", { class: "steps" }, ...Array.from({ length: t.steps }, (_, i) => box(`${t.id}#${i + 1}`, pw, String(i + 1)))),
       byTag(...Array.from({ length: t.steps }, (_, i) => `${t.id}#${i + 1}`))));
@@ -203,14 +206,14 @@ function taskCard(t, pw) {
   if (t.kind === "prestige") {
     const base = has(t.id), pres = has(`${t.id}#p`);
     return el("div", { class: "task" + (base && pres ? " done" : "") }, el("div", {},
-      el("div", { class: "nm" }, t.name),
+      el("div", { class: "nm" }, t.name, ruleTip(t.rule)),
       el("label", {}, box(t.id, pw), ` Base (+5): ${t.condition}`),
       el("label", { style: "display:block;margin-top:4px" }, box(`${t.id}#p`, pw), ` Prestige (+3): ${t.prestige}`),
       pres && !base ? el("div", { class: "zero" }, "Prestige ticked but base isn't: 0 points until the base is done") : "",
       byTag(t.id, `${t.id}#p`)));
   }
   return el("div", { class: "task" + (has(t.id) ? " done" : "") }, box(t.id, pw),
-    el("div", {}, el("div", { class: "nm" }, t.name), el("div", { class: "sub" }, t.condition), byTag(t.id)));
+    el("div", {}, el("div", { class: "nm" }, t.name, ruleTip(t.rule)), el("div", { class: "sub" }, t.condition), byTag(t.id)));
 }
 
 function draw() {
