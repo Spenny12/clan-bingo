@@ -69,3 +69,15 @@ test("player breakdown has no unnamed row when everything is named", () => {
   const rows = playerBreakdown(scoreEvents([{ key: "standard:masks", at: 1, by: "Adam" }]), ["Adam"]);
   assert.deepEqual(rows.map((r) => r.player), ["Adam"]);
 });
+
+test("task rules are non-empty strings, and only on tasks that exist once", async () => {
+  const { STANDARD, CHUNGUS, PRESTIGE, INCREMENTAL, GENERAL_RULES } = await import("../shared/tasks.mjs");
+  const all = [...STANDARD, ...CHUNGUS, ...PRESTIGE, ...INCREMENTAL];
+  assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task ids are unique");
+  for (const t of all) if ("rule" in t) assert.ok(typeof t.rule === "string" && t.rule.trim(), `${t.id} has a blank rule`);
+  assert.ok(GENERAL_RULES.length > 0);
+  // All clue-sourced tasks share the clue stacking rule.
+  for (const id of ["standard:what-are-those", "standard:hawk-cluah", "standard:ez", "chungus:rare-clue"]) {
+    assert.match(all.find((t) => t.id === id)?.rule ?? "", /stacking clues/, id);
+  }
+});

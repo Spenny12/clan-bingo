@@ -17,7 +17,7 @@ const store = {
 
 let board, current, state, scores, charts = {};
 const SCOREBOARD = "scoreboard";
-const ui = { tab: "overview", hideDone: false, q: "", player: null };
+const ui = { tab: "overview", hideDone: false, q: "", player: null, rulesOpen: false };
 const api = async (path, opts = {}, pw) => {
   const res = await fetch(path, { ...opts, headers: { "content-type": "application/json", "x-password": pw || "" } });
   const data = await res.json().catch(() => ({}));
@@ -121,7 +121,11 @@ function render(pw) {
 
   const body = el("div", {});
   const closed = state.open ? "" : el("div", { class: "closed" }, "🔒 Ticking is closed by the organiser. You can look, but not tick or untick.");
-  view.replaceChildren(el("div", { class: "sticky" }, bar, seg, closed), body);
+  const rules = el("details", { class: "card rules" }, el("summary", {}, el("b", {}, "General rules"), el("span", { class: "mute" }, " · hover a task's ⓘ for its own rule")),
+    el("ul", {}, ...board.generalRules.map((r) => el("li", {}, r))));
+  rules.open = ui.rulesOpen; // render() rebuilds the page on every tick, so remember whether it was open
+  rules.addEventListener("toggle", () => { ui.rulesOpen = rules.open; });
+  view.replaceChildren(el("div", { class: "sticky" }, bar, seg, closed), rules, body);
   if (ui.tab === "overview") renderOverview(body);
   else if (ui.tab === "players") renderPlayers(body);
   else renderSection(body, board.sections.find((x) => x.id === ui.tab), pw);

@@ -10,7 +10,7 @@ const store = {
   get: () => { try { return localStorage.getItem("bingo:organiser"); } catch { return null; } },
   set: (v) => { try { v == null ? localStorage.removeItem("bingo:organiser") : localStorage.setItem("bingo:organiser", v); } catch {} },
 };
-let pw = store.get(), data, pvpTasks;
+let pw = store.get(), data, board;
 
 async function call(opts) {
   const res = await fetch("/api/admin", { ...opts, headers: { "content-type": "application/json", "x-password": pw || "" } });
@@ -39,8 +39,31 @@ async function setOpen(open) {
   render();
 }
 
+/** Every ruling in one place: the general rules, then each task that has its own, searchable. Open state survives re-renders. */
+let rulesOpen = false, rulesQ = "";
+function rulesCard() {
+  const tasks = board.sections.flatMap((s) => s.tasks.filter((t) => t.rule).map((t) => ({ ...t, section: s.title })));
+  const list = el("div", { class: "tablewrap" });
+  const paint = () => {
+    const q = rulesQ.trim().toLowerCase();
+    const rows = tasks.filter((t) => !q || `${t.name} ${t.condition} ${t.rule}`.toLowerCase().includes(q));
+    list.replaceChildren(rows.length ? el("table", {}, el("tr", {}, ...["Task", "Section", "Condition", "Rule"].map((h) => el("th", {}, h))),
+      ...rows.map((t) => el("tr", {}, el("td", {}, el("b", {}, t.name)), el("td", { class: "mute" }, t.section), el("td", { class: "mute" }, t.condition), el("td", {}, t.rule))))
+      : el("div", { class: "empty" }, "No rules match."));
+  };
+  const search = el("input", { type: "search", placeholder: "Search rules…", value: rulesQ, oninput: (e) => { rulesQ = e.target.value; paint(); } });
+  const d = el("details", { class: "card" }, el("summary", {}, el("h2", { style: "display:inline" }, `Rules (${board.generalRules.length} general, ${tasks.length} task rulings)`)),
+    el("h3", { class: "kh" }, "General"), el("ul", {}, ...board.generalRules.map((r) => el("li", {}, r))),
+    el("h3", { class: "kh" }, "Per task"), search, list);
+  d.open = rulesOpen;
+  d.addEventListener("toggle", () => { rulesOpen = d.open; });
+  paint();
+  return d;
+}
+
 async function render() {
-  pvpTasks ||= (await (await fetch("/api/tasks")).json()).sections.find((s) => s.id === "pvp").tasks;
+  board ||= await (await fetch("/api/tasks")).json();
+  const pvpTasks = board.sections.find((s) => s.id === "pvp").tasks;
   const rank = [...data.teams].sort((a, b) => b.score.total - a.score.total);
   const table = el("table", {}, el("tr", {}, ...["Team", "Total", "Standard", "Chungus", "Prestige", "Incr.", "PvP"].map((h) => el("th", {}, h))),
     ...rank.map((t) => el("tr", {}, el("td", {}, t.name), el("td", {}, String(t.score.total)), ...["standard", "chungus", "prestige", "incremental", "pvp"].map((k) => el("td", {}, String(t.score[k]))))));
@@ -60,7 +83,7 @@ async function render() {
     el("div", { class: data.open ? "mute" : "err" }, data.open ? "The board is open." : "🔒 The board is locked: teams can look but not change anything. PvP placements still work."));
 
   $("#view").replaceChildren(gate, el("div", { class: "card" }, el("h2", { style: "margin-top:0" }, "Scores"), table),
-    el("h2", {}, "PvP placements"), ...pvp);
+    el("h2", {}, "PvP placements"), ...pvp, rulesCard());
 }
 
 (async () => {

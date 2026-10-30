@@ -12,10 +12,18 @@ export const TEAMS = [
 ];
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-/** `rule`, when given, is the clarifying ruling from Sheet2 — shown as a hover note on the task's tile. */
+/** `rule`, when given, is the clarifying ruling from Sheet2 — shown as a hover note (ⓘ) on the task's tile and listed on the organiser page. */
 const std = (kind, list) => list.map(([name, condition, rule]) => ({ id: `${kind}:${slug(name)}`, kind, name, condition, ...(rule ? { rule } : {}) }));
 
-const CLUE_STACK = "No stacking clues or caskets.";
+const CLUE_STACK = "No stacking clues or caskets: clues must be obtained and completed during the bingo.";
+
+/** Rules that apply to the whole board. Shown on the organiser page and at the top of each team page. */
+export const GENERAL_RULES = [
+  "Everything is pooled across your team: drops can be split between teammates, and a tick belongs to the team.",
+  "Drops must be obtained during the bingo. Nothing can be bought, and nothing can be preloaded (no saved-up chests, caskets, seeds or runs in progress).",
+  "A task's own rule (the ⓘ next to its name) is extra to these and wins if they differ.",
+  "Be reasonable. The organiser has the final say on any dispute.",
+];
 
 export const STANDARD = std("standard", [
   ["Masks", "Get a Mask of Ranuul and a Shaman Mask"],
@@ -25,36 +33,36 @@ export const STANDARD = std("standard", [
   ["Return of the Champ Scroll", "Get any Champion scroll"],
   ["Spider Clogs", "Get 1 unique from each of Venenatis, Sarachnis, Araxxor", "Not TP, not coagulated venom."],
   ["Yamadabadoo", "Get 1 piece of Oathplate or Soulflame Horn"],
-  ["Unsired", "Get 2 Bludgeon pieces", "No stacking unsired."],
+  ["Unsired", "Get 2 Bludgeon pieces", "No stacking Unsired: they must be received during the bingo."],
   ["Woodcutting", "1m Woodcutting xp"],
   ["Runecrafting", "1m Runecrafting xp"],
   ["Mining", "1m Mining xp"],
-  ["Agility", "1m Agility xp", "No stacking Brimhaven agility tickets."],
+  ["Agility", "1m Agility xp", "No stacking Brimhaven Agility Arena tickets: tickets must be earned during the bingo."],
   ["Sailing!!!!", "2m Sailing xp"],
-  ["Buttplug", "Get a Masterwand or Mage's Book", "Masterwand must be built from scratch — can't have pizazz points banked in any category that's a requirement for buying any non-rune item."],
+  ["Buttplug", "Get a Masterwand or Mage's Book", "Masterwand must be built from scratch. You can't have Pizazz points banked in any category that is a requirement for buying any non-rune item."],
   ["Twinflame", "Get both Twinflame staff pieces"],
   ["What are those???", "Get a Medium Clue boots reward", CLUE_STACK],
   ["Ironman", "Get a Zombie Helmet, Axe, and Warped Sceptre"],
   ["Hawk Cluah", "Get a Dragon Mask from an Elite Clue or Demon Mask from a Master Clue", CLUE_STACK],
   ["EZ", "Get a Ham Joint or Flared Trousers from an Easy Clue", CLUE_STACK],
-  ["GG", "Get a GGs Unique", "Dust and maul drops don't count."],
+  ["GG", "Get a GGs Unique", "Dust and maul don't count as the unique."],
   ["Yet another Forgotten 4", "Any piece of virtus"],
-  ["Bookworm", "Get any Tome", "No stacking searches."],
-  ["Boss Pet", "Get any Boss Pet", "No Beefy Bess, no Chaos Elemental pet."],
-  ["Skilling Pet", "Get any Skilling Pet", "No Chompy pet."],
-  ["PMs", "Get one drop from each Moon", "No preloading a chest."],
+  ["Bookworm", "Get any Tome", "No stacking searches: they must be earned during the bingo."],
+  ["Boss Pet", "Get any Boss Pet", "Beef and the Chaos Elemental pet don't count."],
+  ["Skilling Pet", "Get any Skilling Pet", "The Chompy chick pet doesn't count."],
+  ["PMs", "Get one drop from each Moon", "No preloading: you can't have a chest ready to go and open it as soon as the bingo starts."],
   ["ToB", "Get a ToB purple"],
   ["CoX", "Get a CoX purple"],
   ["ToA", "Get a ToA purple"],
-  ["Mad Angel", "Get a Mad Angel unique", "No TP or dust."],
+  ["Mad Angel", "Get a Mad Angel unique", "TP and dust don't count."],
   ["Synapse", "Get a Synapse"],
-  ["Maggot King", "Get a Maggot King Unique", "Must be the pet, Elder Fang, or Kisten."],
-  ["GotR", "Get two of: Dye, Lantern, Abyssal Needle, Pet", "No stacking; can't buy using pearls."],
+  ["Maggot King", "Get a Maggot King Unique", "Only the pet, Elder Fang, or Crimson Kisten count."],
+  ["GotR", "Get two of: Dye, Lantern, Abyssal Needle, Pet", "No stacking, and you can't buy the item using abyssal pearls."],
   ["We <3 Sailing!", "Get EITHER Drag Cannon or Salvaging Hook AND Bottled Storm"],
   ["We <3 Trawling!", "Get 1 of any Trawling Big Fish"],
-  ["Giants", "Get Bryo Essence or Giants Club", "No stacking keys."],
+  ["Giants", "Get Bryo Essence or Giants Club", "No stacking keys: they must be earned during the bingo."],
   ["Capybara Gaming", "Get Fletching Knife, Jewellers Chisel, and Prescription Goggles/Storage", "Can't stack offerings, can't buy the knife with research points, can't stack Mixology resin (be reasonable)."],
-  ["Hydra", "Any Hydra unique", "Must be from the boss."],
+  ["Hydra", "Any Hydra unique", "Must be dropped by the boss itself."],
   ["Sailing PvM", "Get a Shellbane unique + Horn of Plenty OR Aquanite Tendon"],
   ["Elf Style", "Pickpocket an Enhanced Crystal Teleport Seed"],
   ["Zealot", "Get full Zealot Robes"],
@@ -66,32 +74,32 @@ export const CHUNGUS = std("chungus", [
   ["Back to GWD", "Get a unique (not Godsword Shard) from each GWD Boss excluding Nex"],
   ["Dragon Warrior", "Get a Dragon Full Helm, Dragon Metal Lump, or Dragon Metal Slice", "No stacking chewed bones."],
   ["Capes", "Complete 1x Inferno or 2x Colo or 5x Fight Caves", "Can't be mid-run when the bingo starts."],
-  ["Nightmare", "Any Nightmare unique", "Anything but the tablet."],
+  ["Nightmare", "Any Nightmare unique", "Any unique except the tablet."],
   ["Money Maker", "Get an Amulet of Eternal Glory"],
   ["Superior Slayer", "Get an Imbued Heart or Eternal Slayer Gem"],
-  ["Autism Complete", "Get a Soulreaper Axe", "Have to get all 4 drops."],
-  ["Doom", "Get a glowie hole from Doom", "Dupe pet counts."],
+  ["Autism Complete", "Get a Soulreaper Axe", "You have to get all 4 drops during the bingo (pooled across the team). Nothing bought."],
+  ["Doom", "Get a glowie hole from Doom", "A dupe pet counts."],
   ["The Adam Task", "Get a Ring of Endurance"],
-  ["Voidwaker", "Build a Voidwaker", "Have to get all the drops."],
-  ["Paint", "Get Salvors, Anglers, Barracuda, or Inky Paint", "Drops only — not bought."],
+  ["Voidwaker", "Build a Voidwaker", "You have to get every drop during the bingo (pooled across the team). Nothing bought."],
+  ["Paint", "Get Salvors, Anglers, Barracuda, or Inky Paint", "Must be dropped, not bought. No preloading: nothing banked before the bingo starts."],
 ]);
 
 export const PRESTIGE = [
   ["Blood Torva", "Bandos Tassets or Chestplate", "Kill any Awakened Boss"],
   ["Ancient Ceremony", "Get 3 unique Ancient Ceremonial Robes", "Get a full set of Ancient Ceremonial"],
-  ["Gauntleting", "Get 3 Armour and/or Weapon Seeds", "Get an Enhanced Seed", "Can't preload."],
+  ["Gauntleting", "Get 3 Armour and/or Weapon Seeds", "Get an Enhanced Seed", "No preloading: nothing banked or ready to open before the bingo starts."],
   ["Rev weapon", "Get a rev weapon upgrade", "Get the respective rev weapon"],
-  ["Gone Fishing", "Golden Tench", "Any Fishing Utility drop from Tempoross", "Can't buy temp drops; 25 pages counts as a dupe drop."],
+  ["Gone Fishing", "Golden Tench", "Any Fishing Utility drop from Tempoross", "Tempoross drops can't be bought. 25 pages counts as a dupe drop, so it counts."],
   ["Build-a-Godsword", "Get any God Hilt", "Get each Godsword piece"],
-  ["Ed's Fave", "Get all DK rings", "Add a vestige to any of them", "Can just be 3 ring drops across the team — doesn't physically need to be a vestige."],
-  ["Barrows Bukkake", "Get a Barrows drop for each slot", "All from the same bro", "Can't preload."],
-  ["Dragonslayer 3", "Get a unique from Huey and Zulrah", "Get a Draconic/Skeletal Visage", "Not seeds, soiled pages, hide, TPs, or scales."],
+  ["Ed's Fave", "Get all DK rings", "Add a vestige to any of them", "Can just be 3 ring drops across the team. It doesn't physically need to be a vestige."],
+  ["Barrows Bukkake", "Get a Barrows drop for each slot", "All from the same bro", "No preloading: nothing banked or ready to open before the bingo starts."],
+  ["Dragonslayer 3", "Get a unique from Huey and Zulrah", "Get a Draconic/Skeletal Visage", "These don't count as uniques: seeds, soiled pages, hide, TPs, scales."],
   ["Purples", "Get any Raid Purple", "One from two different raids"],
   ["Spider Monkeys", "Get 2 Zenytes", "Araxyte Fang or Elder Venator Fang"],
   ["Tools of the Trade", "Get a Dragon Harpoon, Axe, and Pickaxe", "Get a Smouldering Stone"],
   ["Reddit", "Get Mole Slippers", "Get Holy Sandals"],
   ["Venator Bow", "Get 2 Venator Shards", "Get 3 Shards"],
-  ["Really scary", "Make an Odium or Malediction Ward", "Make the other one", "Have to get each of the drops."],
+  ["Really scary", "Make an Odium or Malediction Ward", "Make the other one", "You have to get each of the drops during the bingo (pooled across the team). Nothing bought."],
 ].map(([name, condition, prestige, rule]) => ({ id: `prestige:${slug(name)}`, kind: "prestige", name, condition, prestige, ...(rule ? { rule } : {}) }));
 
 // `steps` is the number of ticks a task has (one point each). Ticks are stored per step.
@@ -102,7 +110,7 @@ export const INCREMENTAL = [
   ["Autism in Progress", "Get each piece of the Soulreaper Axe", 4],
   ["Lord of the Rings pt 2", "Callisto, Vetion, Venenatis Ring", 3],
   ["Slops", "Any item that can be mounted on a Head display and Araxyte head", 7],
-  ["Monkeys", "Each monkey backpack", 6, "Scoring is based on the laps done during the bingo, not actually claiming the item."],
+  ["Monkeys", "Each monkey backpack", 6, "Scored on the laps you do during the bingo, not on actually claiming the item."],
 ].map(([name, condition, steps, rule]) => ({ id: `inc:${slug(name)}`, kind: "incremental", name, condition, steps, ...(rule ? { rule } : {}) }));
 
 export const PVP = [
