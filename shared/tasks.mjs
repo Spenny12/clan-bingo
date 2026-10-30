@@ -6,10 +6,10 @@ export const POINTS = { standard: 6, chungus: 10, prestigeBase: 5, prestigeBonus
 
 /**
  * When the bingo runs, in UK time (GMT from 25 Oct 2026, so the same as UTC):
- * from the stroke of midnight going into Sunday 1 November to the end of Sunday 22 November 2026.
+ * from the stroke of midnight going into Sunday 1 November to the end of Sunday 29 November 2026.
  * Set `start` to null to use the first tick anyone makes instead.
  */
-export const BINGO = { start: Date.parse("2026-11-01T00:00:00Z"), end: Date.parse("2026-11-22T23:59:59Z") };
+export const BINGO = { start: Date.parse("2026-11-01T00:00:00Z"), end: Date.parse("2026-11-29T23:59:59Z") };
 
 export const TEAMS = [
   { id: "crystal", name: "Crystal Gimpling", players: ["Adam", "Spenny", "Ryan"], env: "PASS_CRYSTAL" },
